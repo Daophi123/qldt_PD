@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx watch server.ts",
-    "start:prod": "node build/qldt_api/server.js",
+    "start:prod": "tsc && node build/qldt_api/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -32,7 +32,10 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.1",
     "sequelize": "^6.37.8",
-    "sqlite3": "^6.0.1",
+    "sqlite3": "^5.1.7",
     "zod": "^4.6.5"
+  },
+  "allowScripts": {
+    "sqlite3@5.1.7": true
   }
 }
