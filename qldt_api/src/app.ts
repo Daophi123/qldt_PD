@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 
 const app: Application = express();
 
-// Middlewares
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(cors());
