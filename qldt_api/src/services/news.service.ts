@@ -1,12 +1,5 @@
 import { Op, WhereOptions } from "sequelize";
-import {
-  CategoryModel,
-  DepartmentModel,
-  NewsModel,
-  AttachmentModel,
-  CommentModel,
-  BookMarkModel,
-} from "../models";
+import { CategoryModel, DepartmentModel, NewsModel, AttachmentModel, CommentModel, BookMarkModel } from "../models";
 import { ApiError } from "../utils/apiError";
 
 interface NewsFilterQuery {
@@ -238,10 +231,7 @@ export class NewsService {
     return news;
   }
 
-  public static async addComment(
-    newsId: string,
-    payload: { content: string; userId?: string; authorName: string; avatar?: string }
-  ) {
+  public static async addComment(newsId: string, payload: { content: string; userId?: string; authorName: string; avatar?: string }) {
     const news = await NewsModel.findByPk(newsId);
     if(!news) {
       throw new ApiError("404", "Bản tin không tồn tại để thêm bình luận");
