@@ -78,7 +78,7 @@ export class NewsController {
 
   public static removeBookmark = catchAsync(async(req: Request, res: Response) => {
     const id = getParamId(req.params.id);
-    const userId = typeof req.query.userId === "string" ? req.query.userId : req.body.userId;
+    const userId = typeof req.query.userId === "string" ? req.query.userId : req.body?.userId;
     await NewsService.removeBookmark(id, userId);
     res.status(200).json(new ApiResponse(200, "Đã bỏ lưu bản tin", null));
   });

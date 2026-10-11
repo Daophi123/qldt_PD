@@ -1,4 +1,13 @@
 import z from "zod";
+import { toISODate } from "../utils/date.util";
+
+const vnDate = (message: string) =>
+  z
+    .string()
+    .regex(/^\d{2}\/\d{2}\/\d{4}$/, message)
+    .refine((value) => {
+      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(toISODate(value));
+    }, message);
 
 export const getNewsListSchema = z.object({
   query: z.object({
@@ -8,9 +17,12 @@ export const getNewsListSchema = z.object({
     departmentId: z.string().optional(),
     categoryCode: z.string().optional(),
     categoryId: z.string().optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-    isPinned: z.coerce.boolean().optional(),
+    startDate: vnDate("Ngày bắt đầu phải có định dạng DD/MM/YYYY").optional(),
+    endDate: vnDate("Ngày kết thúc phải có định dạng DD/MM/YYYY").optional(),
+    isPinned: z
+      .enum(["true", "false"], "isPinned chỉ nhận giá trị true hoặc false")
+      .transform((value) => value === "true")
+      .optional(),
   }),
 });
 
@@ -27,8 +39,8 @@ export const createNewsSchema = z.object({
     content: z.string().trim().min(1, "Nội dung bản tin không được để trống"),
     categoryId: z.string().min(1, "Mã chuyên mục không được để trống"),
     departmentId: z.string().min(1, "Mã phòng ban/đơn vị không được để trống"),
-    startDate: z.string().min(1, "Ngày bắt đầu không được để trống"),
-    endDate: z.string().optional(),
+    startDate: vnDate("Ngày bắt đầu phải có định dạng DD/MM/YYYY"),
+    endDate: vnDate("Ngày kết thúc phải có định dạng DD/MM/YYYY").optional(),
     authorId: z.string().optional(),
     authorName: z.string().optional(),
     thumbnailUrl: z.string().optional(),
@@ -54,10 +66,10 @@ export const updateNewsSchema = z.object({
     title: z.string().trim().min(1, "Tiêu đề không được để trống").optional(),
     summary: z.string().optional(),
     content: z.string().trim().min(1, "Nội dung không được để trống").optional(),
-    categoryId: z.string().optional(),
-    departmentId: z.string().optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
+    categoryId: z.string().min(1, "Mã chuyên mục không được để trống").optional(),
+    departmentId: z.string().min(1, "Mã phòng ban/đơn vị không được để trống").optional(),
+    startDate: vnDate("Ngày bắt đầu phải có định dạng DD/MM/YYYY").optional(),
+    endDate: vnDate("Ngày kết thúc phải có định dạng DD/MM/YYYY").optional(),
     authorId: z.string().optional(),
     authorName: z.string().optional(),
     thumbnailUrl: z.string().optional(),
@@ -86,6 +98,22 @@ export const bookmarkBodySchema = z.object({
     userId: z.string().min(1, "Mã người dùng không được để trống"),
   }),
 });
+
+export const removeBookmarkSchema = z
+  .object({
+    params: z.object({
+      id: z.string().min(1, "Mã bản tin không được để trống"),
+    }),
+    query: z.object({
+      userId: z.string().min(1, "Mã người dùng không được để trống").optional(),
+    }),
+    body: z
+      .object({
+        userId: z.string().min(1, "Mã người dùng không được để trống").optional(),
+      })
+      .optional(),
+  })
+  .refine((req) => req.query.userId !== undefined || req.body?.userId !== undefined, "Mã người dùng không được để trống");
 
 export const userIdQuerySchema = z.object({
   query: z.object({

@@ -8,6 +8,7 @@ import {
   updateNewsSchema,
   createCommentSchema,
   bookmarkBodySchema,
+  removeBookmarkSchema,
   userIdQuerySchema,
 } from "../validations/news.validation";
 
@@ -27,6 +28,6 @@ router.get("/:id/comments", validate(idParamSchema), NewsController.getComments)
 router.post("/:id/comments", validate(createCommentSchema), NewsController.createComment);
 router.get("/:id/bookmarks/check", validate(idParamSchema), NewsController.checkBookmark);
 router.post("/:id/bookmarks", validate(bookmarkBodySchema), NewsController.addBookmark);
-router.delete("/:id/bookmarks", validate(idParamSchema), NewsController.removeBookmark);
+router.delete("/:id/bookmarks", validate(removeBookmarkSchema), NewsController.removeBookmark);
 
 export default router;
