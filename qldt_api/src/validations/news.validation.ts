@@ -6,6 +6,7 @@ const vnDate = (message: string) =>
     .string()
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, message)
     .refine((value) => {
+      const parsed = new Date(`${toISODate(value)}T00:00:00Z`);
       return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(toISODate(value));
     }, message);
 
