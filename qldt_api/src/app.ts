@@ -7,12 +7,13 @@ import "./models";
 import routes from "./routes/index";
 import { errorHandler } from "./middlewares/error.middleware";
 import { ApiError } from "./utils/apiError";
+import { environment } from "./config/environment";
 
 const app: Application = express();
 
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({ origin: environment.CORS_ORIGIN }));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
