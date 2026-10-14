@@ -13,7 +13,7 @@ const app: Application = express();
 
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use(cors({ origin: environment.CORS_ORIGIN }));
+app.use(cors({ origin: environment.CORS_ORIGIN, credentials: true }));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

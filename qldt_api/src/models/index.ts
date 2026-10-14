@@ -5,6 +5,7 @@ import { CommentModel } from "./news/comment.model";
 import { DepartmentModel } from "./news/department.model";
 import { NewsModel } from "./news/news.model";
 import { UserModel } from "./user/user.model";
+import { RefreshTokenModel } from "./user/refreshToken.model";
 
 NewsModel.belongsTo(DepartmentModel, { foreignKey: "departmentId", as: "department" });
 DepartmentModel.hasMany(NewsModel, { foreignKey: "departmentId", as: "news" });
@@ -24,5 +25,6 @@ export {
   AttachmentModel,
   CommentModel,
   BookMarkModel,
-  UserModel
+  UserModel,
+  RefreshTokenModel
 }

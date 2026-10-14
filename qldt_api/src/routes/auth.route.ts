@@ -8,6 +8,8 @@ const router = Router();
 
 router.post("/seed", AuthController.seedData);
 router.post("/login", validate(loginSchema), AuthController.login);
+router.post("/refresh", AuthController.refresh);
+router.post("/logout", AuthController.logout);
 router.get("/me", authenticate, AuthController.getMe);
 router.put("/password", authenticate, validate(changePasswordSchema), AuthController.changePassword);
 
