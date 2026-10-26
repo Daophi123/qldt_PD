@@ -8,6 +8,7 @@ const requiredEnvVars = [
   "BASE_URL",
   "JWT_SECRET",
   "JWT_EXPIRES_IN",
+  "REFRESH_TOKEN_EXPRIRES_DAYS",
   "ENCRYPTION_SECRET_KEY",
   "CORS_ORIGIN"
 ]
@@ -33,6 +34,7 @@ export const environment = {
   DB_STORAGE: process.env.DB_STORAGE || "./data/dbqldt-example.sqlite",
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+  REFRESH_TOKEN_EXPRIRES_DAYS: Number(process.env.REFRESH_TOKEN_EXPRIRES_DAYS),
   ENCRYPTION_SECRET_KEY: process.env.ENCRYPTION_SECRET_KEY,
   CORS_ORIGIN: process.env.CORS_ORIGIN
 }

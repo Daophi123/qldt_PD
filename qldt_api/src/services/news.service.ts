@@ -1,6 +1,11 @@
-import { Op, WhereOptions } from "sequelize";
+import { Op, WhereOptions, literal, where as sqlWhere } from "sequelize";
 import { CategoryModel, DepartmentModel, NewsModel, AttachmentModel, CommentModel, BookMarkModel } from "../models";
 import { ApiError } from "../utils/apiError";
+import { toISODate } from "../utils/date.util";
+
+const START_DATE_ISO = literal(
+  "substr(`NewsModel`.`start_date`, 7, 4) || '-' || substr(`NewsModel`.`start_date`, 4, 2) || '-' || substr(`NewsModel`.`start_date`, 1, 2)"
+);
 
 interface NewsFilterQuery {
   page?: number;
@@ -86,7 +91,7 @@ export class NewsService {
       await AttachmentModel.bulkCreate(attachmentsData);
     }
 
-    return await this.getNewsById(news.id);
+    return await this.findNewsDetail(news.id);
   }
 
   public static async updateNews(id: string, payload: Record<string, unknown>) {
@@ -94,8 +99,14 @@ export class NewsService {
     if(!news) {
       throw new ApiError("404", "Không tìm thấy bản tin để cập nhật");
     }
+    if(typeof payload.categoryId === "string" && !(await CategoryModel.findByPk(payload.categoryId))) {
+      throw new ApiError("404", "Chuyên mục tin tức không tồn tại");
+    }
+    if(typeof payload.departmentId === "string" && !(await DepartmentModel.findByPk(payload.departmentId))) {
+      throw new ApiError("404", "Phòng ban / đơn vị ban hành không tồn tại");
+    }
     await news.update(payload);
-    return await this.getNewsById(id);
+    return await this.findNewsDetail(id);
   }
 
   public static async deleteNews(id: string) {
@@ -128,11 +139,11 @@ export class NewsService {
       ];
     }
     if(query.startDate && query.endDate) {
-      where["startDate"] = { [Op.between]: [query.startDate, query.endDate] };
+      where[Op.and] = [sqlWhere(START_DATE_ISO, { [Op.between]: [toISODate(query.startDate), toISODate(query.endDate)] })];
     } else if(query.startDate) {
-      where["startDate"] = { [Op.gte]: query.startDate };
+      where[Op.and] = [sqlWhere(START_DATE_ISO, { [Op.gte]: toISODate(query.startDate) })];
     } else if(query.endDate) {
-      where["endDate"] = { [Op.lte]: query.endDate };
+      where[Op.and] = [sqlWhere(START_DATE_ISO, { [Op.lte]: toISODate(query.endDate) })];
     }
 
     const categoryWhere: Record<string, unknown> = {};
@@ -208,26 +219,29 @@ export class NewsService {
     return { training, university, studentActivity };
   }
 
-  public static async getNewsById(id: string) {
+  private static async findNewsDetail(id: string, onlyActive = false) {
     const news = await NewsModel.findOne({
-      where: { id, isActive: true },
+      where: onlyActive ? { id, isActive: true } : { id },
       include: [
         { model: DepartmentModel, as: "department" },
         { model: CategoryModel, as: "category" },
         { model: AttachmentModel, as: "attachments" },
-        {
-          model: CommentModel,
-          as: "comments",
-          order: [["created_at", "DESC"]],
-        },
+        { model: CommentModel, as: "comments" },
       ],
+      order: [[{ model: CommentModel, as: "comments" }, "created_at", "DESC"]],
     });
 
     if(!news) {
       throw new ApiError("404", "Không tìm thấy bản tin yêu cầu");
     }
 
+    return news;
+  }
+
+  public static async getNewsById(id: string) {
+    const news = await this.findNewsDetail(id, true);
     await news.increment("views", { by: 1 });
+    news.setDataValue("views", news.views + 1);
     return news;
   }
 
