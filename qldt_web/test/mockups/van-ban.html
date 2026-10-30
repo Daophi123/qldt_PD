@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Văn bản | Cổng Đào tạo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="van-ban">
+<div class="app">
+  <div id="top"></div>
+  <div id="side"></div>
+  <main class="main">
+    <div class="head">
+      <div><h1>Văn bản</h1><p>Quy chế, quy định, hướng dẫn và biểu mẫu dành cho người học.</p></div>
+    </div>
+
+    <section class="panel">
+      <div class="panel__head" style="flex-wrap:wrap;justify-content:flex-start">
+        <label class="input" style="width:300px"><i class="ph ph-magnifying-glass"></i><input placeholder="Tìm theo số hiệu hoặc tên văn bản" aria-label="Tìm văn bản"></label>
+        <div class="chips" role="group" aria-label="Loại văn bản">
+          <button class="chip" aria-pressed="true">Tất cả</button>
+          <button class="chip" aria-pressed="false">Quy chế</button>
+          <button class="chip" aria-pressed="false">Quy định</button>
+          <button class="chip" aria-pressed="false">Hướng dẫn</button>
+          <button class="chip" aria-pressed="false">Biểu mẫu</button>
+        </div>
+        <label class="input" style="width:200px;margin-left:auto"><i class="ph ph-buildings"></i><select aria-label="Đơn vị ban hành"><option>Mọi đơn vị ban hành</option><option>Phòng Đào tạo</option><option>Phòng ĐBCL và Khảo thí</option><option>Phòng Tài chính Kế toán</option></select></label>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Số hiệu</th><th>Tên văn bản</th><th>Loại</th><th>Đơn vị ban hành</th><th>Ngày ban hành</th><th class="num">Tệp</th></tr></thead>
+          <tbody>
+            <tr><td class="code">1520/QĐ-ĐT</td><td><b>Quy chế đào tạo trình độ đại học</b><small>Áp dụng từ khoá tuyển sinh 2024</small></td><td><span class="tag tag--info">Quy chế</span></td><td>Phòng Đào tạo</td><td>15/08/2024</td><td class="num"><a class="btn btn--sm" href="#"><i class="ph ph-file-pdf" style="color:var(--danger)"></i>PDF, 1,2 MB</a></td></tr>
+            <tr><td class="code">318/QĐ-ĐT</td><td><b>Quy định đánh giá chuẩn đầu ra ngoại ngữ</b><small>Thay thế quyết định 205/QĐ-ĐT</small></td><td><span class="tag">Quy định</span></td><td>Phòng ĐBCL và Khảo thí</td><td>02/03/2026</td><td class="num"><a class="btn btn--sm" href="#"><i class="ph ph-file-pdf" style="color:var(--danger)"></i>PDF, 640 KB</a></td></tr>
+            <tr><td class="code">45/HD-ĐT</td><td><b>Hướng dẫn đăng ký học phần trực tuyến</b><small>Có ảnh minh hoạ từng bước</small></td><td><span class="tag tag--accent">Hướng dẫn</span></td><td>Phòng Đào tạo</td><td>10/07/2026</td><td class="num"><a class="btn btn--sm" href="#"><i class="ph ph-file-pdf" style="color:var(--danger)"></i>PDF, 2,8 MB</a></td></tr>
+            <tr><td class="code">BM-ĐT-07</td><td><b>Đơn đề nghị phúc khảo bài thi</b></td><td><span class="tag tag--warn">Biểu mẫu</span></td><td>Phòng ĐBCL và Khảo thí</td><td>05/01/2026</td><td class="num"><a class="btn btn--sm" href="#"><i class="ph ph-file-doc" style="color:var(--info)"></i>DOCX, 38 KB</a></td></tr>
+            <tr><td class="code">BM-ĐT-12</td><td><b>Đơn xin nghỉ học tạm thời, bảo lưu kết quả</b></td><td><span class="tag tag--warn">Biểu mẫu</span></td><td>Phòng Đào tạo</td><td>05/01/2026</td><td class="num"><a class="btn btn--sm" href="#"><i class="ph ph-file-doc" style="color:var(--info)"></i>DOCX, 41 KB</a></td></tr>
+            <tr><td class="code">212/QĐ-TCKT</td><td><b>Quy định mức thu học phí năm học 2026-2027</b></td><td><span class="tag">Quy định</span></td><td>Phòng Tài chính Kế toán</td><td>20/08/2026</td><td class="num"><a class="btn btn--sm" href="#"><i class="ph ph-file-pdf" style="color:var(--danger)"></i>PDF, 520 KB</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px">
+        <span>Hiển thị 1 đến 6 trong 42 văn bản</span>
+        <div style="display:flex;gap:4px"><button class="btn btn--sm btn--icon" aria-label="Trang trước" disabled><i class="ph ph-caret-left"></i></button><button class="btn btn--sm" aria-current="page" style="background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-hover)">1</button><button class="btn btn--sm">2</button><button class="btn btn--sm">3</button><button class="btn btn--sm btn--icon" aria-label="Trang sau"><i class="ph ph-caret-right"></i></button></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>

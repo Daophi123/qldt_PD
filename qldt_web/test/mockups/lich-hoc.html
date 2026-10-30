@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch học | Cổng Đào tạo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="lich-hoc">
+<div class="app">
+  <div id="top"></div>
+  <div id="side"></div>
+  <main class="main">
+    <nav class="crumbs" aria-label="Vị trí">Thời khóa biểu<i class="ph ph-caret-right"></i>Lịch học</nav>
+    <div class="head">
+      <div><h1>Lịch học</h1><p>Học kỳ 1, năm học 2026-2027. 6 học phần, 18 tín chỉ.</p></div>
+      <div class="head__actions">
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="btn btn--icon" aria-label="Tuần trước"><i class="ph ph-caret-left"></i></button>
+          <button class="btn">Tuần 9: 26/10 đến 01/11/2026</button>
+          <button class="btn btn--icon" aria-label="Tuần sau"><i class="ph ph-caret-right"></i></button>
+        </div>
+        <button class="btn">Hôm nay</button>
+        <div class="chips" role="group" aria-label="Kiểu xem"><button class="chip" aria-pressed="true"><i class="ph ph-calendar-blank"></i>Tuần</button><button class="chip" aria-pressed="false"><i class="ph ph-list-bullets"></i>Danh sách</button></div>
+        <button class="btn"><i class="ph ph-export"></i>Xuất lịch</button>
+      </div>
+    </div>
+
+    <section class="panel" style="overflow-x:auto">
+      <div class="week" id="week" style="min-width:900px">
+        <div class="week__corner"></div>
+        <div class="week__day">Thứ 2<b>26/10</b></div>
+        <div class="week__day">Thứ 3<b>27/10</b></div>
+        <div class="week__day">Thứ 4<b>28/10</b></div>
+        <div class="week__day">Thứ 5<b>29/10</b></div>
+        <div class="week__day is-today">Thứ 6<b>30/10</b></div>
+        <div class="week__day">Thứ 7<b>31/10</b></div>
+        <div class="week__day">Chủ nhật<b>01/11</b></div>
+      </div>
+    </section>
+    <p style="color:var(--muted);font-size:13px;margin-top:12px;display:flex;gap:6px;align-items:center"><i class="ph ph-info"></i>Tiết 1 bắt đầu 07:00, mỗi tiết 50 phút. Lịch có thể thay đổi, hãy theo dõi mục Tin tức.</p>
+  </main>
+</div>
+<script src="shell.js"></script>
+<script>
+  // Dựng lưới giờ 07:00 đến 18:00 và đặt các buổi học (dữ liệu mẫu)
+  const week = document.getElementById("week");
+  const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+  let cells = "";
+  for (const h of hours) {
+    cells += `<div class="week__time">${String(h).padStart(2, "0")}:00</div>`;
+    for (let d = 0; d < 7; d++) cells += `<div class="week__cell${d === 4 ? " is-today" : ""}"></div>`;
+  }
+  week.insertAdjacentHTML("beforeend", cells);
+  const sessions = [
+    { d: 0, s: 7, e: 9.5, t: "Cấu trúc dữ liệu và giải thuật", r: "301 G2", c: "" },
+    { d: 0, s: 13, e: 15.5, t: "Mạng máy tính", r: "105 E3", c: "slot--b" },
+    { d: 1, s: 9.5834, e: 12, t: "Công nghệ phần mềm", r: "208 G2", c: "slot--c" },
+    { d: 2, s: 13, e: 15.5, t: "Phát triển ứng dụng Web", r: "208 G2", c: "slot--b" },
+    { d: 3, s: 7, e: 9.5, t: "Hệ điều hành", r: "401 G2", c: "slot--d" },
+    { d: 4, s: 7, e: 9.5, t: "Cấu trúc dữ liệu và giải thuật", r: "301 G2", c: "" },
+    { d: 4, s: 9.5834, e: 12, t: "Xác suất thống kê", r: "105 E3", c: "slot--c" },
+    { d: 4, s: 13, e: 15.5, t: "Tiếng Anh B1", r: "207 A2", c: "slot--d" },
+    { d: 5, s: 7, e: 8.6667, t: "Giáo dục thể chất 3", r: "Sân vận động", c: "slot--b" },
+  ];
+  const fmt = (x) => `${String(Math.floor(x)).padStart(2, "0")}:${String(Math.round((x % 1) * 60)).padStart(2, "0")}`;
+  requestAnimationFrame(() => {
+    const day = week.querySelectorAll(".week__day");
+    const head = day[0].offsetHeight;
+    const rowH = 56;
+    for (const s of sessions) {
+      const col = day[s.d];
+      const el = document.createElement("div");
+      el.className = `slot ${s.c}`;
+      el.style.left = `${col.offsetLeft + 4}px`;
+      el.style.width = `${col.offsetWidth - 8}px`;
+      el.style.top = `${head + (s.s - 7) * rowH + 3}px`;
+      el.style.height = `${(s.e - s.s) * rowH - 6}px`;
+      el.innerHTML = `<b>${s.t}</b>${fmt(s.s)} đến ${fmt(s.e)}<br>Phòng ${s.r}`;
+      week.appendChild(el);
+    }
+  });
+</script>
+</body>
+</html>
