@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch thi | Cổng Đào tạo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="lich-thi">
+<div class="app">
+  <div id="top"></div>
+  <div id="side"></div>
+  <main class="main">
+    <nav class="crumbs" aria-label="Vị trí">Thời khóa biểu<i class="ph ph-caret-right"></i>Lịch thi</nav>
+    <div class="head">
+      <div><h1>Lịch thi</h1><p>Đợt 1, học kỳ 1 năm học 2026-2027. Lịch do Phòng ĐBCL và Khảo thí công bố ngày 28/10/2026.</p></div>
+      <div class="head__actions"><button class="btn"><i class="ph ph-printer"></i>In lịch thi</button><button class="btn"><i class="ph ph-export"></i>Xuất lịch</button></div>
+    </div>
+
+    <div class="note note--warn" style="margin-bottom:16px"><i class="ph-fill ph-identification-card"></i><div><b>Mang thẻ sinh viên hoặc CCCD khi dự thi.</b> Có mặt trước giờ thi 15 phút. Sinh viên chưa nộp đủ học phí sẽ không có tên trong danh sách phòng thi.</div></div>
+
+    <div class="tabs" role="tablist" aria-label="Trạng thái" style="margin-bottom:0">
+      <button role="tab" aria-selected="true">Sắp thi <span class="n">5</span></button>
+      <button role="tab" aria-selected="false">Đã thi <span class="n">0</span></button>
+      <button role="tab" aria-selected="false">Thi lại <span class="n">1</span></button>
+    </div>
+    <section class="panel" style="border-top-left-radius:0;border-top-right-radius:0;border-top:0">
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Ngày thi</th><th>Giờ</th><th>Học phần</th><th>Hình thức</th><th>Phòng</th><th class="num">SBD</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            <tr><td><b>Thứ 2, 09/11/2026</b><small>còn 10 ngày</small></td><td>07:30<small>90 phút</small></td><td><b>Xác suất thống kê</b><small>MAT1101, 3 TC</small></td><td>Tự luận</td><td>203 G2</td><td class="num">041</td><td><span class="tag tag--accent">Đã xếp phòng</span></td></tr>
+            <tr><td><b>Thứ 5, 12/11/2026</b><small>còn 13 ngày</small></td><td>13:30<small>120 phút</small></td><td><b>Cấu trúc dữ liệu và giải thuật</b><small>INT2210, 4 TC</small></td><td>Thực hành máy</td><td>401 G2</td><td class="num">017</td><td><span class="tag tag--accent">Đã xếp phòng</span></td></tr>
+            <tr><td><b>Thứ 2, 16/11/2026</b><small>còn 17 ngày</small></td><td>09:30<small>60 phút</small></td><td><b>Tiếng Anh B1</b><small>FLF1107, 4 TC</small></td><td>Trắc nghiệm máy</td><td>Phòng máy 2 nhà A2</td><td class="num">112</td><td><span class="tag tag--accent">Đã xếp phòng</span></td></tr>
+            <tr><td><b>Thứ 4, 18/11/2026</b><small>còn 19 ngày</small></td><td>07:30<small>90 phút</small></td><td><b>Mạng máy tính</b><small>INT2213, 3 TC</small></td><td>Tự luận</td><td><span style="color:var(--muted)">Chưa xếp</span></td><td class="num">-</td><td><span class="tag tag--warn">Chờ xếp phòng</span></td></tr>
+            <tr><td><b>Thứ 6, 20/11/2026</b><small>còn 21 ngày</small></td><td>13:30<small>Vấn đáp</small></td><td><b>Công nghệ phần mềm</b><small>INT2208E, 3 TC</small></td><td>Bảo vệ bài tập lớn</td><td>208 G2</td><td class="num">-</td><td><span class="tag tag--info">Theo nhóm</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>

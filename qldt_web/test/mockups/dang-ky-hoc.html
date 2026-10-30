@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng ký học | Cổng Đào tạo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="dang-ky-hoc">
+<div class="app">
+  <div id="top"></div>
+  <div id="side"></div>
+  <main class="main">
+    <nav class="crumbs" aria-label="Vị trí">Đăng ký trực tuyến<i class="ph ph-caret-right"></i>Đăng ký học</nav>
+    <div class="head">
+      <div><h1>Đăng ký học</h1><p>Học kỳ 1, năm học 2026-2027. Đợt đăng ký bổ sung.</p></div>
+    </div>
+    <div class="note" style="margin-bottom:16px"><i class="ph-fill ph-clock-countdown"></i><div><b>Cổng đăng ký mở từ 01/11 đến 17:00 ngày 05/11/2026.</b> Mỗi sinh viên đăng ký tối thiểu 14, tối đa 24 tín chỉ. Kết quả được giữ chỗ ngay khi bấm Đăng ký.</div></div>
+
+    <div class="cols-2-1">
+      <section class="panel">
+        <div class="panel__head" style="flex-wrap:wrap">
+          <h2>Học phần mở trong kỳ</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="input" style="width:240px"><i class="ph ph-magnifying-glass"></i><input placeholder="Tìm mã hoặc tên học phần" aria-label="Tìm học phần"></label>
+            <label class="input" style="width:250px"><i class="ph ph-funnel"></i><select aria-label="Loại học phần"><option>Theo chương trình đào tạo</option><option>Tự chọn</option><option>Học lại, học cải thiện</option></select></label>
+          </div>
+        </div>
+
+        <div class="course">
+          <div class="course__head"><div><h3>INT3306 Phát triển ứng dụng Web</h3><p>3 tín chỉ, bắt buộc, học phần tiên quyết INT2211 đã đạt</p></div><span class="sp"></span><span class="tag tag--ok"><i class="ph ph-check"></i>Đã đăng ký lớp 2</span></div>
+          <div class="table-wrap"><table class="data">
+            <thead><tr><th>Lớp</th><th>Lịch học</th><th>Phòng</th><th>Giảng viên</th><th>Sĩ số</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="code">INT3306 1</td><td>Thứ 2, tiết 1-3</td><td>301 G2</td><td>TS. Lê Quang Hiếu</td><td><span class="seat full"><i class="ph ph-users"></i>60/60</span></td><td class="num"><button class="btn btn--sm" disabled>Hết chỗ</button></td></tr>
+              <tr><td class="code">INT3306 2</td><td>Thứ 4, tiết 7-9</td><td>208 G2</td><td>ThS. Vũ Thị Hồng</td><td><span class="seat"><i class="ph ph-users"></i>51/60</span></td><td class="num"><button class="btn btn--sm btn--danger">Huỷ</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="course">
+          <div class="course__head"><div><h3>INT3401 Trí tuệ nhân tạo</h3><p>3 tín chỉ, bắt buộc</p></div><span class="sp"></span><span class="tag">Chưa đăng ký</span></div>
+          <div class="table-wrap"><table class="data">
+            <thead><tr><th>Lớp</th><th>Lịch học</th><th>Phòng</th><th>Giảng viên</th><th>Sĩ số</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="code">INT3401 1</td><td>Thứ 3, tiết 1-3</td><td>105 E3</td><td>PGS.TS. Hoàng Văn Nam</td><td><span class="seat"><i class="ph ph-users"></i>38/70</span></td><td class="num"><button class="btn btn--sm btn--primary">Đăng ký</button></td></tr>
+              <tr><td class="code">INT3401 2</td><td>Thứ 4, tiết 7-9<small style="color:var(--danger)">Trùng lịch INT3306 2</small></td><td>202 G2</td><td>TS. Đỗ Thị Mai</td><td><span class="seat"><i class="ph ph-users"></i>44/70</span></td><td class="num"><button class="btn btn--sm" disabled>Trùng lịch</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="course">
+          <div class="course__head"><div><h3>PHY1100 Cơ - Nhiệt</h3><p>3 tín chỉ, học lại</p></div><span class="sp"></span><span class="tag tag--warn">Học lại</span></div>
+          <div class="table-wrap"><table class="data">
+            <thead><tr><th>Lớp</th><th>Lịch học</th><th>Phòng</th><th>Giảng viên</th><th>Sĩ số</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="code">PHY1100 7</td><td>Thứ 6, tiết 4-6</td><td>303 E3</td><td>TS. Bùi Đức Thắng</td><td><span class="seat"><i class="ph ph-users"></i>22/80</span></td><td class="num"><button class="btn btn--sm btn--primary">Đăng ký</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <div class="stack" style="position:sticky;top:72px">
+        <section class="panel">
+          <div class="panel__head"><h2>Học phần đã đăng ký</h2><span class="tag">6 học phần</span></div>
+          <div class="panel__body" style="border-bottom:1px solid var(--line)">
+            <div class="meter"><span style="color:var(--muted)">Tổng tín chỉ</span><b>18 <small style="font-size:13px;color:var(--muted);font-weight:400">/ 24 tối đa</small></b></div>
+            <div class="bar" role="progressbar" aria-valuenow="18" aria-valuemin="0" aria-valuemax="24" aria-label="Số tín chỉ đã đăng ký"><span style="width:75%"></span></div>
+          </div>
+          <ul class="list-rows cart">
+            <li><b>Phát triển ứng dụng Web</b><small>INT3306 2, thứ 4 tiết 7-9, 3 TC</small><button class="btn btn--sm btn--icon x" aria-label="Huỷ đăng ký"><i class="ph ph-x"></i></button></li>
+            <li><b>Mạng máy tính</b><small>INT2213 3, thứ 2 tiết 7-9, 3 TC</small><button class="btn btn--sm btn--icon x" aria-label="Huỷ đăng ký"><i class="ph ph-x"></i></button></li>
+            <li><b>Công nghệ phần mềm</b><small>INT2208E 1, thứ 3 tiết 4-6, 3 TC</small><button class="btn btn--sm btn--icon x" aria-label="Huỷ đăng ký"><i class="ph ph-x"></i></button></li>
+            <li><b>Hệ điều hành</b><small>INT2214 5, thứ 5 tiết 1-3, 3 TC</small><button class="btn btn--sm btn--icon x" aria-label="Huỷ đăng ký"><i class="ph ph-x"></i></button></li>
+            <li><b>Tiếng Anh B1</b><small>FLF1107 12, thứ 6 tiết 7-9, 4 TC</small><button class="btn btn--sm btn--icon x" aria-label="Huỷ đăng ký"><i class="ph ph-x"></i></button></li>
+            <li><b>Giáo dục thể chất 3</b><small>PES1020 2, thứ 7 tiết 1-2, 2 TC</small><button class="btn btn--sm btn--icon x" aria-label="Huỷ đăng ký"><i class="ph ph-x"></i></button></li>
+          </ul>
+        </section>
+        <a href="lich-hoc.html" class="btn" style="justify-content:center"><i class="ph ph-calendar-blank"></i>Xem trước thời khóa biểu</a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>
