@@ -372,3 +372,66 @@ Thay đổi nhỏ khác:
 - `index.html`: tiêu đề tab đổi thành "Cổng Đào tạo".
 
 Điểm còn có thể làm gọn: file thì dùng dấu chấm phẩy, file thì không, nháy đơn và nháy kép cũng lẫn lộn. Code vẫn chạy, chỉ là đọc không đồng đều.
+
+---
+
+## Phần 2: Khung giao diện sau đăng nhập
+
+Trạng thái: bạn đã tự gõ xong, được rà lại ngày 2026-10-31. Lint sạch, build được, chạy thử đúng với API thật.
+
+### 2.1 Cấu trúc route
+
+```
+ProtectedRoute          kiểm tra đăng nhập (checking / guest / authenticated)
+└─ AppLayout            Topbar + Sidebar + <Outlet />
+   ├─ /                 HomePage
+   └─ các đường dẫn     ComingSoonPage (tạm, cho tới khi có trang thật)
+      lấy từ NAV_LINKS
+```
+
+Một route không có `path` mà chỉ có `element` được gọi là **route bố cục**. Nó không thêm gì vào URL, chỉ bọc giao diện quanh các route con. Ở đây có hai route bố cục lồng nhau: `ProtectedRoute` lo việc đăng nhập, `AppLayout` lo phần khung. Trang con không cần biết hai việc đó.
+
+### 2.2 Từng file
+
+| File | Làm gì |
+|---|---|
+| `routes/navigation.js` | Nơi duy nhất khai báo menu. `NAV_ITEMS` có cấu trúc cây (nhóm và mục con) để vẽ sidebar. `NAV_LINKS` là danh sách phẳng để sinh route và tìm tiêu đề trang. `findNavLink(pathname)` tìm mục ứng với URL hiện tại |
+| `utils/userDisplay.js` | Hàm thuần: `getInitials` lấy chữ đầu của họ và tên làm avatar, `getUserSubtitle` hiện MSSV với sinh viên hoặc tên vai trò với người khác |
+| `components/ui/Logo.jsx` | Logo dùng chung |
+| `components/ui/PageHeader.jsx` | Breadcrumb (nhóm > trang), `h1`, mô tả. Trang nào cũng dùng để tiêu đề thống nhất |
+| `layouts/AppLayout/AppLayout.jsx` | Lưới 2 cột từ `lg`. Giữ state `menuOpen` cho điện thoại, nhấn Esc để đóng, có lớp nền tối, link "Bỏ qua tới nội dung chính" và `<Outlet />` |
+| `layouts/AppLayout/Topbar.jsx` | Nút mở menu (chỉ hiện trên điện thoại), logo, tên và MSSV, avatar |
+| `layouts/AppLayout/Sidebar.jsx` | `NavItem` (mục đơn), `NavGroup` (nhóm thu gọn được), cuối sidebar có Đổi mật khẩu và Đăng xuất |
+| `pages/ComingSoonPage/` | Trang tạm, đọc tiêu đề từ `findNavLink` |
+| `routes/index.jsx` | Sinh route cho mọi mục trong menu bằng `NAV_LINKS.map(...)` |
+
+### 2.3 Các kỹ thuật chính
+
+- **`NavLink`** tự thêm `aria-current="page"` và truyền `isActive` vào hàm `className` và `children`. Mục Trang chủ cần `end`, nếu không thì `/` khớp với mọi đường dẫn và mục Trang chủ luôn sáng.
+- **Nhóm đang chứa trang hiện tại** được xác định bằng `pathname.startsWith(item.basePath)`, nên mọi mục con của một nhóm phải nằm dưới cùng `basePath`.
+- **`useId()`** tạo id duy nhất để nối nút nhóm với danh sách con (`aria-controls`). Nhờ vậy không phải tự đặt id bằng tay.
+- **Sidebar trên điện thoại:**
+  - Là ngăn kéo `fixed` và đi ra ngoài màn hình bằng `-translate-x-full`. Kèm `invisible` để link bị giấu không nhận phím Tab.
+  - `transition-[translate,visibility]`: Tailwind v4 dùng thuộc tính CSS `translate` chứ không phải `transform`.
+  - Từ `lg` trở lên thì đổi sang `lg:sticky lg:translate-x-0 lg:visible`.
+- **Đóng menu khi chuyển trang:** truyền `onNavigate={closeMenu}` vào `onClick` của từng `NavLink`. Không dùng `useEffect` theo dõi `pathname`, vì effect chạy sau khi đã vẽ xong, gây thêm một lần render và menu nháy.
+- **Esc:** chỉ gắn `keydown` khi menu đang mở, và gỡ ra trong hàm dọn dẹp của `useEffect`.
+- **Vùng bấm:** mục menu cao 44px trên điện thoại (`h-11`) và 36px trên máy tính (`lg:h-9`).
+- **Thang khoảng cách của Tailwind v4** nhận mọi bội số của 0.25rem, nên `h-13` (52px), `mb-4.5` (18px) và `ml-4.75` (19px) đều hợp lệ, không cần viết `h-[52px]`. Bản của bạn dùng cách này, gọn hơn hướng dẫn.
+
+### 2.4 Code thực tế khác hướng dẫn
+
+- **Đường dẫn bằng tiếng Anh** (`/news`, `/study-corner/check-grade`...), cho thống nhất với `/login`.
+- **Menu ít mục hơn mockup:** bỏ Tiến độ học tập, Điểm rèn luyện, Đăng ký thi lại, Đăng ký giấy tờ. Mockup trong `test/` vẫn còn các mục này.
+- **`path: 'login'`** viết không có `/`. Vẫn đúng, vì route cha không có path nên đường dẫn này được tính từ gốc.
+- **Logo ghi "Cổng đào tạo"**, trong khi tiêu đề tab và trang đăng nhập ghi "Cổng Đào tạo".
+
+### 2.5 Kiểm tra đã chạy (2026-10-31, API thật, tài khoản `24100001`)
+
+- Đăng nhập thì vào `/` và hiện "Xin chào, Sinh viên mẫu".
+- Bấm lần lượt 9 link trong sidebar: link nào cũng mở đúng trang và mục tương ứng được tô sáng.
+- F5 ở `/study-corner/check-grade` vẫn giữ trang, breadcrumb hiện "Góc học tập > Tra cứu điểm".
+- Thu và mở nhóm: `aria-expanded` đổi đúng, các mục con ẩn và hiện theo.
+- Điện thoại (390px): menu đóng sẵn. Mở menu rồi đóng được bằng Esc và bằng cách bấm nền tối. Bấm một mục thì chuyển trang và menu tự đóng.
+- Đăng xuất thì về `/login`. Vào lại `/news` sau khi đăng xuất thì bị chuyển về `/login`.
+- Ảnh chụp: `test/khung-1-home.png` đến `test/khung-4-mobile-menu.png`.

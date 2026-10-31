@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
     async function restoreSession() {
       try {
         await authApi.refresh();
+        if(!active) return;
         const me = await authApi.getMe();
         if(active) {
           setUser(me);
