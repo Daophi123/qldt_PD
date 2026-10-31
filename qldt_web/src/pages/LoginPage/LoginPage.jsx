@@ -84,6 +84,7 @@ export function LoginPage() {
               id="username"
               name="username"
               label="Tài khoản"
+              placeholder="Nhập tài khoản hoặc email"
               autoComplete="username"
               hint="Mã số sinh viên hoặc email do trường cấp."
               value={values.username}
@@ -95,6 +96,7 @@ export function LoginPage() {
               id="password"
               name="password"
               label="Mật khẩu"
+              placeholder="Nhập mật khẩu"
               autoComplete="current-password"
               value={values.password}
               onChange={handleChange}
