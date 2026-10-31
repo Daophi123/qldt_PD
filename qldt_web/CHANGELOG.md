@@ -13,6 +13,40 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-10-31: Phần 2, khung giao diện sau đăng nhập
+
+Bạn tự gõ theo code mẫu, tôi rà lại và chạy thử.
+
+### Thêm
+- `src/layouts/AppLayout/`: `AppLayout.jsx` (lưới 2 cột, menu trên điện thoại, Esc để đóng, nền tối, link bỏ qua tới nội dung chính), `Topbar.jsx`, `Sidebar.jsx`.
+- `src/routes/navigation.js`: khai báo menu ở một chỗ (`NAV_ITEMS`, `NAV_LINKS`, `findNavLink`).
+- `src/utils/userDisplay.js`: tên vai trò, chữ viết tắt cho avatar, dòng phụ dưới tên (MSSV).
+- `src/components/ui/Logo.jsx`, `src/components/ui/PageHeader.jsx`.
+- `src/pages/ComingSoonPage/`: trang tạm cho các mục chưa có API.
+- `src/index.css`: viền `:focus-visible` dùng màu nhấn, cho người dùng bàn phím.
+
+### Sửa
+- `src/routes/index.jsx`: route `ProtectedRoute` > `AppLayout` > các trang. Route của các mục trong menu được sinh tự động từ `NAV_LINKS`.
+- `src/pages/HomePage/HomePage.jsx`: chỉ còn lời chào. Nút Đăng xuất chuyển xuống cuối sidebar.
+
+### Ý tưởng / quyết định
+- **Menu là dữ liệu, không viết thẳng trong JSX.** Thêm, bớt hay đổi tên một mục chỉ sửa `navigation.js`. Sidebar, router và breadcrumb tự cập nhật theo.
+- **Mục chưa có API vẫn có trang**, là trang "Chức năng đang được xây dựng", để menu không có link chết.
+- **Đóng menu bằng `onClick` trên từng link, không dùng `useEffect` theo dõi URL**, để tránh một lần render thừa.
+- **Trên điện thoại, menu đóng dùng `invisible`** để phím Tab không nhảy vào các link đang bị giấu.
+- **Đường dẫn bằng tiếng Anh, menu gọn hơn mockup:** đây là lựa chọn của bạn khi gõ.
+
+### Đã kiểm tra
+- `npm run lint` sạch. `vite build` được, và các class `h-13`, `top-13`, `mb-4.5`, `ml-4.75`, `scrollbar-thin` đều sinh ra CSS.
+- Chạy thử với API thật: đăng nhập, bấm cả 9 link trong sidebar, F5 ở trang con, thu và mở nhóm, menu điện thoại (Esc, bấm nền tối, bấm link), đăng xuất, vào trang cần đăng nhập khi đã đăng xuất. Tất cả đều đúng. Chi tiết ở `GIAITHICHCODE.md` mục 2.5.
+
+### Việc tiếp theo
+- Thống nhất tên "Cổng đào tạo" hay "Cổng Đào tạo" (logo đang khác tiêu đề tab và trang đăng nhập).
+- `LoginPage` có thể dùng `<Logo />` thay cho khối logo đang viết riêng trong trang.
+- Phần 3: trang Tin tức với API `/news`.
+
+---
+
 ## 2026-10-30: Sửa lỗi luồng đăng nhập sau khi rà code
 
 ### Sửa
