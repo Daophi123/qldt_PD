@@ -13,6 +13,53 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-01 (Phi): Hướng dẫn cho AI ở thư mục gốc
+
+### Thêm
+- `../AGENTS.md`: hướng dẫn chung cho mọi công cụ AI. Gồm:
+  - Việc phải làm trước tiên: hỏi người dùng là Phi hay Dương, đọc `PHANCHIA.md`, đọc code cùng loại trước khi viết mới.
+  - Quy tắc phân quyền.
+  - Cấu trúc dự án và cách chạy, tài khoản test.
+  - Quy ước code `qldt_api` (model, validation, service, controller, route, `ApiResponse`, `ApiError`, ngày `DD/MM/YYYY`).
+  - Quy ước code `qldt_web` (thư mục, token Tailwind, react-router v8, icon Phosphor, token chỉ giữ trong bộ nhớ, truy cập dễ dàng).
+  - Cách ghi nhật ký, quy tắc git, cách làm việc với từng người.
+- `../CLAUDE.md`: chỉ nạp `@AGENTS.md`, để Claude Code và các công cụ khác dùng chung một nội dung.
+
+### Sửa
+- `../PHANCHIA.md`, Bước 0: ghi rõ `qldt_api/.gitignore` đã có `data/dbqldt.sqlite`, chỉ cần chạy `git rm --cached` một lần.
+
+### Ý tưởng / quyết định
+- **Viết một file, nạp ở hai nơi.** `AGENTS.md` là nội dung chính, `CLAUDE.md` chỉ nạp lại. Như vậy không có hai bản phải sửa song song.
+- **AI phải hỏi đang làm việc với ai.** Hai người có tính năng khác nhau và cách làm khác nhau: Phi muốn tự gõ code, còn phần của Dương để Dương tự điền.
+- **Chưa xong Bước 0 thì AI không được tự tạo bảng dùng chung.** Đây là chỗ AI dễ làm sai nhất.
+
+---
+
+## 2026-11-01: Phân chia công việc giữa Phi và Dương
+
+### Thêm
+- `../PHANCHIA.md` (thư mục gốc `qldt_PD`):
+  - Ai làm tính năng nào (cả API lẫn web).
+  - Bước 0 làm chung: các bảng dùng chung, dữ liệu mẫu, bỏ file sqlite khỏi git.
+  - Bảng nào thuộc ai.
+  - Các file cả hai cùng sửa và cách xử lý xung đột.
+  - Component dùng chung, quy trình git, các việc cần chốt khi họp.
+
+### Sửa (cùng ngày)
+- `PHANCHIA.md`: bổ sung sau khi rà lại các rủi ro.
+  - **Sửa chỗ ghi sai:** bản đầu ghi Phi chỉ đọc điểm cho trang chủ. Thực ra Đăng ký học cũng cần điểm, để kiểm tra học phần tiên quyết và đánh dấu "Học lại". Từ nay Phi lấy điểm qua hàm dùng chung `getPassedCourseIds` do Dương viết.
+  - **Bước 0 thêm 4 việc:** danh sách trạng thái đăng ký lớp, hàm `getPassedCourseIds`, kịch bản dữ liệu mẫu chung (file seed tìm bản ghi bằng mã cố định), lệnh `npm run db:reset`. Lệnh này cần vì `sequelize.sync()` không thêm cột vào bảng đã có.
+  - **Thứ tự của Phi đổi lại:** Tin tức → Đăng ký học → Lịch học → Đổi mật khẩu. Phần khó nhất làm sớm.
+  - **Thêm mục 6 "Rủi ro và cách giảm"** (8 rủi ro). Mục "Việc cần chốt khi họp" chuyển thành mục 7 và thêm 3 việc.
+
+### Ý tưởng / quyết định
+- Chia theo dữ liệu.
+  - Phi: Tin tức, Đổi mật khẩu, Lịch học, Đăng ký học, ghép Trang chủ.
+  - Dương: Văn bản, Tra cứu điểm, Chương trình đào tạo, Lịch thi.
+- Lịch học đi cùng Đăng ký học vì cùng dùng dữ liệu thứ, tiết, phòng. Lịch thi đi cùng Tra cứu điểm.
+
+---
+
 ## 2026-10-31: Phần 2, khung giao diện sau đăng nhập
 
 Bạn tự gõ theo code mẫu, tôi rà lại và chạy thử.

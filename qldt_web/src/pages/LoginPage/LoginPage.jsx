@@ -69,7 +69,7 @@ export function LoginPage() {
           Cổng Đào tạo
         </div>
 
-        <div className="my-auto w-full max-w-[380px] py-12">
+        <div className="my-auto w-full max-w-95 py-12">
           <h1 className="text-[28px] font-semibold tracking-[-0.015em]">Đăng nhập</h1>
           <p className="mt-1.5 mb-8 text-muted">
             Sinh viên dùng mã số sinh viên. Cán bộ dùng email công vụ.
@@ -78,7 +78,7 @@ export function LoginPage() {
             <WarningCircleIcon size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
             <p>{formError}</p>
           </div> )}
-          <form noValidate onSubmit={handleSubmit} className="grid gap-[18px]">
+          <form noValidate onSubmit={handleSubmit} className="grid gap-4.5">
             <TextField
               ref={usernameRef}
               id="username"
