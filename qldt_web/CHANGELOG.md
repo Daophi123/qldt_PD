@@ -49,20 +49,6 @@ Phi đã gõ xong 13 file của trang Tin tức, thêm route `/news` và cài `d
 
 ---
 
-## 2026-11-01 (Phi): VS Code tự gợi ý import
-
-### Thêm
-- `jsconfig.json`: báo cho VS Code biết mọi file trong `src/` thuộc cùng một dự án. Nhờ vậy, gõ `useAsync` thì VS Code gợi ý và tự thêm `import { useAsync } from '../../hooks/useAsync'`.
-
-### Ý tưởng / quyết định
-- **Nguyên nhân lỗi:** khi thiếu `jsconfig.json`, VS Code chỉ biết các file đang mở, nên không gợi ý được hàm nằm ở file chưa mở.
-- **`checkJs: false`:** chỉ lấy gợi ý, không bật kiểm tra kiểu. Bật lên thì code JS hiện tại sẽ báo rất nhiều lỗi kiểu.
-- **`moduleResolution: "Bundler"`:** giống cách Vite tìm file, nên đường dẫn được gợi ý không có đuôi `.js` hay `.jsx`.
-- Vite và oxlint không đọc file này, nên build và lint không thay đổi.
-- Đã thử bằng chính bản TypeScript đi kèm VS Code của Phi: gõ `useAsy` trong một file ở `pages/NewsPage/` thì gợi ý `useAsync`, và dòng import được thêm là `import { useAsync } from '../../hooks/useAsync';`.
-
----
-
 ## 2026-11-01 (Phi): Hướng dẫn cho AI ở thư mục gốc
 
 ### Thêm

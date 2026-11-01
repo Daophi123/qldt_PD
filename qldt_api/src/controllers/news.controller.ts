@@ -53,9 +53,9 @@ export class NewsController {
     res.status(200).json(new ApiResponse(200, "Lấy danh sách tin tức theo nhóm thành công", data));
   });
 
-  public static getNewsDetail = catchAsync(async(req: Request, res: Response) => {
+  public static getNewsDetail = catchAsync(async(req: AuthRequest, res: Response) => {
     const id = getParamId(req.params.id);
-    const news = await NewsService.getNewsById(id);
+    const news = await NewsService.getNewsById(id, req.user!.id);
     res.status(200).json(new ApiResponse(200, "Lấy chi tiết tin tức thành công", news));
   });
 

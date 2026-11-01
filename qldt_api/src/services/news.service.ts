@@ -1,5 +1,5 @@
-import { Op, WhereOptions, literal, where as sqlWhere } from "sequelize";
-import { CategoryModel, DepartmentModel, NewsModel, AttachmentModel, CommentModel, BookMarkModel } from "../models";
+import { Op, UniqueConstraintError, WhereOptions, literal, where as sqlWhere } from "sequelize";
+import { CategoryModel, DepartmentModel, NewsModel, AttachmentModel, CommentModel, BookMarkModel, NewsViewModel } from "../models";
 import { ApiError } from "../utils/apiError";
 import { toISODate } from "../utils/date.util";
 
@@ -117,6 +117,7 @@ export class NewsService {
     await AttachmentModel.destroy({ where: { newsId: id } });
     await CommentModel.destroy({ where: { newsId: id } });
     await BookMarkModel.destroy({ where: { newsId: id } });
+    await NewsViewModel.destroy({ where: { newsId: id } });
     await news.destroy();
     return true;
   }
@@ -238,10 +239,25 @@ export class NewsService {
     return news;
   }
 
-  public static async getNewsById(id: string) {
+  private static async recordView(newsId: string, userId: string) {
+    try {
+      await NewsViewModel.create({ newsId, userId });
+      return true;
+    } catch(e) {
+      if(e instanceof UniqueConstraintError) {
+        return false;
+      }
+      throw e;
+    }
+  }
+
+  public static async getNewsById(id: string, userId: string) {
     const news = await this.findNewsDetail(id, true);
-    await news.increment("views", { by: 1 });
-    news.setDataValue("views", news.views + 1);
+    const isFirstView = await this.recordView(id, userId);
+    if(isFirstView) {
+      await news.increment("views", { by: 1 });
+      news.setDataValue("views", news.views + 1);
+    }
     return news;
   }
 

@@ -468,35 +468,28 @@ Không phải lỗi: `scrollbar-none` (Tailwind 4.3 có sẵn, sinh `scrollbar-w
 Mọi lỗi trong bảng 3.1 đã được sửa. Phi tự sửa phần lớn; Claude sửa nốt `'/news/departments'`, import `formatFileSize`, và `<span>` chứa tên chuyên mục ở `NewsList.jsx`.
 
 Bài học:
-- **`vite build` thành công không có nghĩa là không thiếu import.** Build không báo lỗi khi dùng một biến chưa import mà biến đó không nằm trong JSX, ví dụ `formatNumber(...)`. `oxlint` chỉ bắt được biến thiếu trong JSX (`jsx-no-undef`, như `<Link>`). Có `jsconfig.json` rồi thì gõ tên hàm và chọn gợi ý để VS Code tự thêm import.
+- **`vite build` thành công không có nghĩa là không thiếu import.** Build không báo lỗi khi dùng một biến chưa import mà biến đó không nằm trong JSX, ví dụ `formatNumber(...)`. `oxlint` chỉ bắt được biến thiếu trong JSX (`jsx-no-undef`, như `<Link>`).
 - **Arrow function có `{ }` phải có `return`.** Viết `map(x => ( <div/> ))` thì trả về JSX luôn. Viết `map(x => { <div/> })` thì trả về `undefined`.
 - **`value` của `<option>` phải lấy từ phần tử đang lặp** (`department.id`), không lấy từ state (`departmentId`).
 
----
+### 3.3 API: mỗi tài khoản chỉ tính 1 lượt xem (2026-11-02)
 
-## Phụ lục: `jsconfig.json` (gợi ý import trong VS Code)
+**Trước đây:** mỗi lần gọi `GET /news/:id` đều cộng 1 vào `views`. F5 nhiều lần hoặc `StrictMode` gọi 2 lần đều làm lượt xem tăng.
 
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
-    "allowJs": true,
-    "checkJs": false,
-    "skipLibCheck": true
-  },
-  "include": ["src"]
-}
+**Bây giờ:** có thêm bảng `news_views` ghi lại tài khoản nào đã xem tin nào.
+
+```
+GET /news/:id  (đã đăng nhập)
+  └─ NewsService.getNewsById(id, req.user.id)
+       ├─ findNewsDetail(id)                 404 nếu không có hoặc tin đã ẩn
+       ├─ recordView(id, userId)
+       │    ├─ NewsViewModel.create(...)     tạo được  → true  (lần đầu xem)
+       │    └─ UniqueConstraintError         đã có dòng → false (đã xem rồi)
+       └─ true thì news.increment("views")
 ```
 
-- **Để làm gì:** VS Code dùng TypeScript ở bên dưới để gợi ý code, kể cả với file `.js` và `.jsx`. Khi thiếu file này, nó chỉ biết các file đang mở. Ví dụ `useAsync.js` chưa mở thì gõ `useAsync` không có gợi ý import.
-- **`include: ["src"]`:** mọi file trong `src/` thuộc cùng một dự án, nên gợi ý được hàm và component ở bất kỳ file nào.
-- **`moduleResolution: "Bundler"`** tìm file giống Vite, vì vậy đường dẫn gợi ý không có đuôi (`'../../hooks/useAsync'`).
-- **`jsx: "react-jsx"`:** JSX không cần `import React`, giống cấu hình của Vite.
-- **`checkJs: false`:** chỉ lấy gợi ý, không gạch đỏ lỗi kiểu trong code JS.
-- **Kiểu nháy và dấu `;` của dòng import** do VS Code bắt chước các import đã có trong file. File nào dùng nháy đơn thì import mới cũng dùng nháy đơn.
-- **Sau khi thêm hoặc sửa file này:** nếu VS Code chưa gợi ý thì bấm `Ctrl+Shift+P`, chạy `TypeScript: Restart TS Server` (hoặc `Developer: Reload Window`).
-- Vite và oxlint không đọc file này.
+- **Chỉ mục duy nhất `(news_id, user_id)`** khai báo trong `indexes` của model. Vì có `underscored: true`, tên cột phải viết dạng `news_id`.
+- **Vì sao không dùng `findOrCreate` hoặc "tìm rồi mới tạo":** hai request đến cùng lúc đều thấy chưa có dòng nào, nên đều cộng. Để database chặn bằng chỉ mục duy nhất là cách chắc chắn nhất.
+- **Các lỗi khác vẫn được ném ra** (`throw e`), chỉ riêng lỗi trùng mới bị bỏ qua.
+- **Cột `views` vẫn giữ** để danh sách tin không phải đếm bảng `news_views` mỗi lần tải. Nếu sau này muốn tính lại từ đầu thì đặt `views` bằng số dòng `news_views` của từng tin.
+- **Web không phải sửa gì:** API vẫn trả về `views` như cũ.
