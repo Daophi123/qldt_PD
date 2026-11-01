@@ -13,6 +13,56 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-02 (Phi): Sửa lỗi trang Tin tức sau khi rà code
+
+Phi nhờ sửa hộ ("sửa luôn hộ"). Phi đã tự sửa phần lớn trước đó. Claude sửa nốt:
+- `newsApi.js`: `'news/departments'` thành `'/news/departments'`.
+- `NewsReader.jsx`: thêm `formatFileSize` vào dòng import `../../utils/format` (trước đó chỉ có `formatNumber`, nên tệp đính kèm sẽ lỗi).
+- `NewsList.jsx`: bọc tên chuyên mục và lượt xem trong một `<span>`, hiện lại tên chuyên mục.
+- `GIAITHICHCODE.md`: trả lại kiểu xuống dòng LF như trên git. Lần ghi trước đã lỡ đổi sang CRLF, khiến git báo đổi cả file.
+
+Kiểm tra: `oxlint` sạch, `vite build` thành công. Chạy thử trên app thật (cổng 3000, API thật, tài khoản `24100001`):
+- Có đủ tab chuyên mục.
+- Lọc đơn vị giữ được lựa chọn và trả về 2 tin. Tìm "đăng ký" thì ô tìm vẫn giữ chữ.
+- 4 ô thông tin tin có giá trị. Tệp đính kèm hiện tên và loại.
+- Bình luận trống thì báo lỗi bằng chữ. Bộ đếm hiện `3/1000`.
+- Trên điện thoại: hiện nút quay lại, ẩn danh sách, không tràn ngang.
+
+Chưa thử được phần hiện nội dung bình luận, vì DB chưa có bình luận nào và không gửi thật để tránh tạo dữ liệu rác. Ảnh `test/tin-tuc-2-doc-tin.png` được chụp lại.
+
+### Lần rà code trước khi sửa
+
+Phi đã gõ xong 13 file của trang Tin tức, thêm route `/news` và cài `dompurify`. Đã so với bản chạy thử, chạy `oxlint` và `vite build`. Build vẫn thành công, nhưng có các lỗi sau (chi tiết ở `GIAITHICHCODE.md`, mục 3.1):
+
+### Lỗi làm hỏng trang
+- `NewsReader.jsx`: thiếu import `Link`, `formatNumber`, `formatFileSize`, nên mở một tin là trang bị lỗi.
+- `NewsReader.jsx`: `facts.map(fact => { <div/> })` không trả về gì, nên ô thông tin tin trống.
+- `newsApi.js`: gõ `/new/categories` thay vì `/news/categories`, nên không hiện tab chuyên mục.
+- `NewsPage.jsx`: viết `params.departmentId;` mà không gán giá trị, nên lọc theo đơn vị không có tác dụng.
+- `NewsFilters.jsx`: `value={departmentId}` đặt cho mọi `<option>`, nên chọn đơn vị nào cũng không đổi.
+- `NewsPage.jsx`: không truyền `keyword` vào `NewsFilters`, nên ô tìm kiếm bị xoá chữ sau khi tìm và React báo cảnh báo.
+- `NewsComments.jsx`: không hiện nội dung bình luận và không hiện chữ báo lỗi.
+
+### Lỗi nhỏ
+- `NewsList.jsx`: `if (loading)` khiến danh sách bị xoá trắng mỗi lần đổi bộ lọc. Ngoài ra không hiện tên chuyên mục.
+- Chữ sai chính tả "hiện thị". `MAX_LENGTH = 100`.
+
+---
+
+## 2026-11-01 (Phi): VS Code tự gợi ý import
+
+### Thêm
+- `jsconfig.json`: báo cho VS Code biết mọi file trong `src/` thuộc cùng một dự án. Nhờ vậy, gõ `useAsync` thì VS Code gợi ý và tự thêm `import { useAsync } from '../../hooks/useAsync'`.
+
+### Ý tưởng / quyết định
+- **Nguyên nhân lỗi:** khi thiếu `jsconfig.json`, VS Code chỉ biết các file đang mở, nên không gợi ý được hàm nằm ở file chưa mở.
+- **`checkJs: false`:** chỉ lấy gợi ý, không bật kiểm tra kiểu. Bật lên thì code JS hiện tại sẽ báo rất nhiều lỗi kiểu.
+- **`moduleResolution: "Bundler"`:** giống cách Vite tìm file, nên đường dẫn được gợi ý không có đuôi `.js` hay `.jsx`.
+- Vite và oxlint không đọc file này, nên build và lint không thay đổi.
+- Đã thử bằng chính bản TypeScript đi kèm VS Code của Phi: gõ `useAsy` trong một file ở `pages/NewsPage/` thì gợi ý `useAsync`, và dòng import được thêm là `import { useAsync } from '../../hooks/useAsync';`.
+
+---
+
 ## 2026-11-01 (Phi): Hướng dẫn cho AI ở thư mục gốc
 
 ### Thêm
