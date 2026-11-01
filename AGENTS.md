@@ -97,6 +97,7 @@ Mỗi tính năng gồm các file sau, đặt tên theo tính năng (ví dụ `d
   - Bám theo mockup trong `qldt_web/test/mockups/` và ảnh chụp trong `qldt_web/test/`.
   - Phong cách là ứng dụng làm việc: bảng, danh sách, ít trang trí, font IBM Plex Sans, màu nhấn navy `#223771` chỉ dùng cho hành động chính và mục đang chọn.
   - Mockup có thể có mục mà menu thật đã bỏ. `navigation.js` mới là nguồn đúng.
+  - Sử dụng skill impeccable để làm.
 
 ## 6. Nhật ký
 
