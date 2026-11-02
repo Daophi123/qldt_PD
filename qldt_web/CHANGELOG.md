@@ -13,6 +13,30 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-02 (Phi): Component bảng dùng chung `DataTable`
+
+### Thêm
+- `src/components/ui/DataTable.jsx`: bảng dữ liệu dùng chung cho Văn bản, Tra cứu điểm, Lịch thi (Dương) và Đăng ký học (Phi). Phi tự gõ theo code mẫu.
+  - Khai báo cột bằng mảng `columns` (`key`, `header`, `render`, `align`, `nowrap`, `className`).
+  - Bảng rỗng thì hiện `EmptyState`. Có `busy` để làm mờ khi đang tải lại, `footer` cho dòng tổng, `caption` cho trình đọc màn hình.
+
+### Ý tưởng / quyết định
+- **Bảng chỉ lo hiển thị.** Đang tải lần đầu, báo lỗi và phân trang do trang tự xử lý bằng `LoadingState`, `ErrorState`, giống trang Tin tức.
+- **`minWidth` mặc định 640px:** màn hình hẹp thì bảng cuộn ngang trong khung, không bóp cột tới mức mỗi chữ một dòng. Cột chữ dài thêm `className: 'min-w-56'`.
+- **Màu dùng token** (`bg-canvas/60`, `border-line`), không chép mã hex `#f8f9fc` từ mockup.
+
+### Đã kiểm tra
+- Code Phi gõ giống bản chạy thử (chỉ khác `row =>` so với `(row) =>`). `oxlint` sạch, `vite build` thành công.
+- Bản chạy thử dựng trang demo theo mockup `van-ban.html` và `tra-cuu-diem.html`:
+  - Có dữ liệu, có dòng tổng, `busy`, rỗng có và không có tiêu đề riêng.
+  - Ở 1100px không cuộn ngang. Ở 390px bảng cuộn trong khung, trang không tràn.
+- Chưa dùng ở trang thật nào.
+
+### Việc tiếp theo
+- Báo Dương đã có `DataTable` và gộp lên `main` để dùng cho Văn bản.
+
+---
+
 ## 2026-11-02 (Phi): Sửa lỗi trang Tin tức sau khi rà code
 
 Phi nhờ sửa hộ ("sửa luôn hộ"). Phi đã tự sửa phần lớn trước đó. Claude sửa nốt:
