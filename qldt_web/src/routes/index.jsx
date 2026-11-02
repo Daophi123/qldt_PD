@@ -7,8 +7,12 @@ import { LoginPage } from '../pages/LoginPage/LoginPage';
 import { HomePage } from '../pages/HomePage/HomePage';
 import { ComingSoonPage } from '../pages/ComingSoonPage/ComingSoonPage';
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage';
+import { NewsPage } from '../pages/NewsPage/NewsPage';
+import { NewsPlaceholder } from '../pages/NewsPage/NewsPlaceholder';
+import { NewsReader } from '../pages/NewsPage/NewsReader';
 
-const comingSoonRoutes = NAV_LINKS.filter(link => link.to !== '/').map(link => ({ path: link.to, element: <ComingSoonPage /> }))
+const BUILT_PATHS = ['/', '/news']
+const comingSoonRoutes = NAV_LINKS.filter(link => !BUILT_PATHS.includes(link.to)).map(link => ({ path: link.to, element: <ComingSoonPage /> }))
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +26,13 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/', element: <HomePage /> },
+          {
+            path: 'news', element: <NewsPage />,
+            children: [
+              { index: true, element: <NewsPlaceholder /> },
+              { path: ':newsId', element: <NewsReader /> }
+            ]
+          },
           ...comingSoonRoutes
         ],
       },

@@ -1,7 +1,8 @@
-import { Op, WhereOptions, literal, where as sqlWhere } from "sequelize";
-import { CategoryModel, DepartmentModel, NewsModel, AttachmentModel, CommentModel, BookMarkModel } from "../models";
+import { Op, UniqueConstraintError, WhereOptions, literal, where as sqlWhere } from "sequelize";
+import { CategoryModel, DepartmentModel, NewsModel, AttachmentModel, CommentModel, BookMarkModel, NewsViewModel } from "../models";
 import { ApiError } from "../utils/apiError";
 import { toISODate } from "../utils/date.util";
+import { SEED_CATEGORIES, SEED_DEPARTMENTS, SEED_NEWS } from "../seeds/news.seed";
 
 const START_DATE_ISO = literal(
   "substr(`NewsModel`.`start_date`, 7, 4) || '-' || substr(`NewsModel`.`start_date`, 4, 2) || '-' || substr(`NewsModel`.`start_date`, 1, 2)"
@@ -117,6 +118,7 @@ export class NewsService {
     await AttachmentModel.destroy({ where: { newsId: id } });
     await CommentModel.destroy({ where: { newsId: id } });
     await BookMarkModel.destroy({ where: { newsId: id } });
+    await NewsViewModel.destroy({ where: { newsId: id } });
     await news.destroy();
     return true;
   }
@@ -238,10 +240,25 @@ export class NewsService {
     return news;
   }
 
-  public static async getNewsById(id: string) {
+  private static async recordView(newsId: string, userId: string) {
+    try {
+      await NewsViewModel.create({ newsId, userId });
+      return true;
+    } catch(e) {
+      if(e instanceof UniqueConstraintError) {
+        return false;
+      }
+      throw e;
+    }
+  }
+
+  public static async getNewsById(id: string, userId: string) {
     const news = await this.findNewsDetail(id, true);
-    await news.increment("views", { by: 1 });
-    news.setDataValue("views", news.views + 1);
+    const isFirstView = await this.recordView(id, userId);
+    if(isFirstView) {
+      await news.increment("views", { by: 1 });
+      news.setDataValue("views", news.views + 1);
+    }
     return news;
   }
 
@@ -306,86 +323,50 @@ export class NewsService {
   }
 
   public static async seedInitialData() {
-    const deptCount = await DepartmentModel.count();
-    if(deptCount === 0) {
-      const pdt = await DepartmentModel.create({
-        code: "PDT",
-        name: "Phòng đào tạo",
-        order: 1,
-        isActive: true,
+    const departmentIds = new Map<string, string>();
+    for(const item of SEED_DEPARTMENTS) {
+      const [department] = await DepartmentModel.findOrCreate({
+        where: { code: item.code },
+        defaults: { ...item, isActive: true },
       });
-      const pdbcl = await DepartmentModel.create({
-        code: "PDBCL",
-        name: "Phòng Đảm bảo chất lượng và khảo thí",
-        order: 2,
-        isActive: true,
-      });
-      await DepartmentModel.create({
-        code: "PKHCN",
-        name: "Phòng Khoa học Công nghệ",
-        order: 3,
-        isActive: true,
-      });
-      await DepartmentModel.create({
-        code: "PTCKT",
-        name: "Phòng Tài chính kế toán",
-        order: 4,
-        isActive: true,
-      });
-
-      const cmDaoTao = await CategoryModel.create({
-        code: "training",
-        name: "Tin đào tạo",
-        order: 1,
-      });
-      const cmNhaTruong = await CategoryModel.create({
-        code: "university",
-        name: "Tin nhà trường",
-        order: 2,
-      });
-      await CategoryModel.create({
-        code: "student_activity",
-        name: "Hoạt động sinh viên",
-        order: 3,
-      });
-
-      // Tạo 2 bản tin mẫu
-      const tin1 = await NewsModel.create({
-        title: "KH100_Xét tốt nghiệp tiến sĩ đợt 2 năm 2025",
-        summary: "Kế hoạch xét tốt nghiệp tiến sĩ đợt 2 năm 2025",
-        content: "<p>Kế hoạch xét tốt nghiệp tiến sĩ đợt 2 năm học 2024-2025 theo quyết định của Hội đồng Đào tạo.</p>",
-        categoryId: cmDaoTao.id,
-        departmentId: pdt.id,
-        authorName: "Nguyễn Thái Vinh",
-        startDate: "12/05/2025",
-        isPinned: true,
-        isActive: true,
-        views: 0,
-      });
-
-      await AttachmentModel.create({
-        newsId: tin1.id,
-        fileName: "KH100_Xet_Tot_Nghiep.pdf",
-        fileUrl: "https://qldtbeta.phenikaa-uni.edu.vn/files/KH100.pdf",
-        fileSize: 1048576,
-        fileType: "application/pdf",
-      });
-
-      await NewsModel.create({
-        title: "Thông báo Kế hoạch Tổ chức thi Đánh giá CĐR năng lực ngoại ngữ",
-        summary: "Kế hoạch thi chuẩn đầu ra",
-        content: "<p>Thông báo kế hoạch tổ chức thi đánh giá chuẩn đầu ra ngoại ngữ nội bộ.</p>",
-        categoryId: cmNhaTruong.id,
-        departmentId: pdbcl.id,
-        authorName: "Phòng ĐBCL&KT",
-        startDate: "08/06/2026",
-        isPinned: true,
-        isActive: true,
-        views: 0,
-      });
-
-      return { seeded: true, message: "Khởi tạo dữ liệu mẫu thành công" };
+      departmentIds.set(item.code, department.id);
     }
-    return { seeded: false, message: "Dữ liệu phòng ban và chuyên mục đã tồn tại từ trước" };
+
+    const categoryIds = new Map<string, string>();
+    for(const item of SEED_CATEGORIES) {
+      const [category] = await CategoryModel.findOrCreate({
+        where: { code: item.code },
+        defaults: item,
+      });
+      categoryIds.set(item.code, category.id);
+    }
+
+    let createdCount = 0;
+    for(const item of SEED_NEWS) {
+      const existed = await NewsModel.count({ where: { title: item.title } });
+      if(existed > 0) {
+        continue;
+      }
+
+      const { categoryCode, departmentCode, attachments, ...fields } = item;
+      const news = await NewsModel.create({
+        ...fields,
+        categoryId: categoryIds.get(categoryCode),
+        departmentId: departmentIds.get(departmentCode),
+        isPinned: fields.isPinned ?? false,
+        isActive: true,
+        views: fields.views ?? 0,
+      });
+
+      for(const file of attachments ?? []) {
+        await AttachmentModel.create({ ...file, newsId: news.id });
+      }
+      createdCount++;
+    }
+
+    if(createdCount === 0) {
+      return { seeded: false, createdCount, message: "Dữ liệu tin tức mẫu đã đủ, không thêm bản tin nào" };
+    }
+    return { seeded: true, createdCount, message: `Đã thêm ${createdCount} bản tin mẫu` };
   }
 }

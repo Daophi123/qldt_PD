@@ -13,6 +13,89 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-02 (Phi): Sửa lỗi trang Tin tức sau khi rà code
+
+Phi nhờ sửa hộ ("sửa luôn hộ"). Phi đã tự sửa phần lớn trước đó. Claude sửa nốt:
+- `newsApi.js`: `'news/departments'` thành `'/news/departments'`.
+- `NewsReader.jsx`: thêm `formatFileSize` vào dòng import `../../utils/format` (trước đó chỉ có `formatNumber`, nên tệp đính kèm sẽ lỗi).
+- `NewsList.jsx`: bọc tên chuyên mục và lượt xem trong một `<span>`, hiện lại tên chuyên mục.
+- `GIAITHICHCODE.md`: trả lại kiểu xuống dòng LF như trên git. Lần ghi trước đã lỡ đổi sang CRLF, khiến git báo đổi cả file.
+
+Kiểm tra: `oxlint` sạch, `vite build` thành công. Chạy thử trên app thật (cổng 3000, API thật, tài khoản `24100001`):
+- Có đủ tab chuyên mục.
+- Lọc đơn vị giữ được lựa chọn và trả về 2 tin. Tìm "đăng ký" thì ô tìm vẫn giữ chữ.
+- 4 ô thông tin tin có giá trị. Tệp đính kèm hiện tên và loại.
+- Bình luận trống thì báo lỗi bằng chữ. Bộ đếm hiện `3/1000`.
+- Trên điện thoại: hiện nút quay lại, ẩn danh sách, không tràn ngang.
+
+Chưa thử được phần hiện nội dung bình luận, vì DB chưa có bình luận nào và không gửi thật để tránh tạo dữ liệu rác. Ảnh `test/tin-tuc-2-doc-tin.png` được chụp lại.
+
+### Lần rà code trước khi sửa
+
+Phi đã gõ xong 13 file của trang Tin tức, thêm route `/news` và cài `dompurify`. Đã so với bản chạy thử, chạy `oxlint` và `vite build`. Build vẫn thành công, nhưng có các lỗi sau (chi tiết ở `GIAITHICHCODE.md`, mục 3.1):
+
+### Lỗi làm hỏng trang
+- `NewsReader.jsx`: thiếu import `Link`, `formatNumber`, `formatFileSize`, nên mở một tin là trang bị lỗi.
+- `NewsReader.jsx`: `facts.map(fact => { <div/> })` không trả về gì, nên ô thông tin tin trống.
+- `newsApi.js`: gõ `/new/categories` thay vì `/news/categories`, nên không hiện tab chuyên mục.
+- `NewsPage.jsx`: viết `params.departmentId;` mà không gán giá trị, nên lọc theo đơn vị không có tác dụng.
+- `NewsFilters.jsx`: `value={departmentId}` đặt cho mọi `<option>`, nên chọn đơn vị nào cũng không đổi.
+- `NewsPage.jsx`: không truyền `keyword` vào `NewsFilters`, nên ô tìm kiếm bị xoá chữ sau khi tìm và React báo cảnh báo.
+- `NewsComments.jsx`: không hiện nội dung bình luận và không hiện chữ báo lỗi.
+
+### Lỗi nhỏ
+- `NewsList.jsx`: `if (loading)` khiến danh sách bị xoá trắng mỗi lần đổi bộ lọc. Ngoài ra không hiện tên chuyên mục.
+- Chữ sai chính tả "hiện thị". `MAX_LENGTH = 100`.
+
+---
+
+## 2026-11-01 (Phi): Hướng dẫn cho AI ở thư mục gốc
+
+### Thêm
+- `../AGENTS.md`: hướng dẫn chung cho mọi công cụ AI. Gồm:
+  - Việc phải làm trước tiên: hỏi người dùng là Phi hay Dương, đọc `PHANCHIA.md`, đọc code cùng loại trước khi viết mới.
+  - Quy tắc phân quyền.
+  - Cấu trúc dự án và cách chạy, tài khoản test.
+  - Quy ước code `qldt_api` (model, validation, service, controller, route, `ApiResponse`, `ApiError`, ngày `DD/MM/YYYY`).
+  - Quy ước code `qldt_web` (thư mục, token Tailwind, react-router v8, icon Phosphor, token chỉ giữ trong bộ nhớ, truy cập dễ dàng).
+  - Cách ghi nhật ký, quy tắc git, cách làm việc với từng người.
+- `../CLAUDE.md`: chỉ nạp `@AGENTS.md`, để Claude Code và các công cụ khác dùng chung một nội dung.
+
+### Sửa
+- `../PHANCHIA.md`, Bước 0: ghi rõ `qldt_api/.gitignore` đã có `data/dbqldt.sqlite`, chỉ cần chạy `git rm --cached` một lần.
+
+### Ý tưởng / quyết định
+- **Viết một file, nạp ở hai nơi.** `AGENTS.md` là nội dung chính, `CLAUDE.md` chỉ nạp lại. Như vậy không có hai bản phải sửa song song.
+- **AI phải hỏi đang làm việc với ai.** Hai người có tính năng khác nhau và cách làm khác nhau: Phi muốn tự gõ code, còn phần của Dương để Dương tự điền.
+- **Chưa xong Bước 0 thì AI không được tự tạo bảng dùng chung.** Đây là chỗ AI dễ làm sai nhất.
+
+---
+
+## 2026-11-01: Phân chia công việc giữa Phi và Dương
+
+### Thêm
+- `../PHANCHIA.md` (thư mục gốc `qldt_PD`):
+  - Ai làm tính năng nào (cả API lẫn web).
+  - Bước 0 làm chung: các bảng dùng chung, dữ liệu mẫu, bỏ file sqlite khỏi git.
+  - Bảng nào thuộc ai.
+  - Các file cả hai cùng sửa và cách xử lý xung đột.
+  - Component dùng chung, quy trình git, các việc cần chốt khi họp.
+
+### Sửa (cùng ngày)
+- `PHANCHIA.md`: bổ sung sau khi rà lại các rủi ro.
+  - **Sửa chỗ ghi sai:** bản đầu ghi Phi chỉ đọc điểm cho trang chủ. Thực ra Đăng ký học cũng cần điểm, để kiểm tra học phần tiên quyết và đánh dấu "Học lại". Từ nay Phi lấy điểm qua hàm dùng chung `getPassedCourseIds` do Dương viết.
+  - **Bước 0 thêm 4 việc:** danh sách trạng thái đăng ký lớp, hàm `getPassedCourseIds`, kịch bản dữ liệu mẫu chung (file seed tìm bản ghi bằng mã cố định), lệnh `npm run db:reset`. Lệnh này cần vì `sequelize.sync()` không thêm cột vào bảng đã có.
+  - **Thứ tự của Phi đổi lại:** Tin tức → Đăng ký học → Lịch học → Đổi mật khẩu. Phần khó nhất làm sớm.
+  - **Thêm mục 6 "Rủi ro và cách giảm"** (8 rủi ro). Mục "Việc cần chốt khi họp" chuyển thành mục 7 và thêm 3 việc.
+
+### Ý tưởng / quyết định
+- Chia theo dữ liệu.
+  - Phi: Tin tức, Đổi mật khẩu, Lịch học, Đăng ký học, ghép Trang chủ.
+  - Dương: Văn bản, Tra cứu điểm, Chương trình đào tạo, Lịch thi.
+- Lịch học đi cùng Đăng ký học vì cùng dùng dữ liệu thứ, tiết, phòng. Lịch thi đi cùng Tra cứu điểm.
+
+---
+
 ## 2026-10-31: Phần 2, khung giao diện sau đăng nhập
 
 Bạn tự gõ theo code mẫu, tôi rà lại và chạy thử.

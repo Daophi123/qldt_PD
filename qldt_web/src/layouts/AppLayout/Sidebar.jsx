@@ -41,42 +41,48 @@ function NavGroup({ item, onNavigate }) {
         <CaretRightIcon size={13} aria-hidden="true" className={clsx('ml-auto text-muted transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-90')} />
       </button>
 
-      {open && (
-        <ul id={listId} className="mt-0.5 mb-1.5 ml-4.75 grid gap-px border-l border-line-strong pl-2.5">
-          {item.children.map(child => (
-            <li key={child.to}>
-              <NavLink to={child.to} onClick={onNavigate} className={({ isActive }) =>
-                clsx('flex h-10 items-center rounded-[7px] px-2.5 transition-colors duration-150 lg:h-8', isActive ? 'bg-panel font-semibold text-accent-hover shadow-[0_1px_2px_rgb(22_27_43/0.07)]' : 'text-muted hover:bg-panel/65 hover:text-ink')
-              }>
-                {child.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div inert={!open} className={clsx(
+        'grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none',
+        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+      )}>
+        <div className="min-h-0 overflow-hidden">
+          <ul id={listId} className="mt-0.5 mb-1.5 ml-4.75 grid gap-px border-l border-line-strong pl-2.5">
+            {item.children.map(child => (
+              <li key={child.to}>
+                <NavLink to={child.to} onClick={onNavigate} className={({ isActive }) =>
+                  clsx('flex h-10 items-center rounded-[7px] px-2.5 transition-colors duration-150 lg:h-8', isActive ? 'bg-panel font-semibold text-accent-hover shadow-[0_1px_2px_rgb(22_27_43/0.07)]' : 'text-muted hover:bg-panel/65 hover:text-ink')
+                }>
+                  {child.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </li>
   )
 }
 
 const footItem = 'flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 text-left text-muted transition-colors duration-150 hover:bg-panel/65 hover:text-ink lg:h-[34px]';
 
-export function Sidebar({ open, onNavigate }) {
+export function Sidebar({ open, collapsed, onNavigate }) {
   const { logout } = useAuth();
 
   return (
     <nav id="app-sidebar" aria-label="Điều hướng chính" className={clsx(
       // Điện thoại: ngăn kéo trượt từ trái, nằm dưới thanh trên cùng
-      'fixed top-13 bottom-0 left-0 z-40 flex w-72 flex-col overflow-y-auto border-r border-line bg-rail px-2.5 pt-3 pb-4 scrollbar-thin',
+      'fixed top-13 bottom-0 left-0 z-40 flex w-72 flex-col overflow-x-hidden overflow-y-auto border-r border-line bg-rail px-2.5 pt-3 pb-4 scrollbar-thin',
       'transition-[translate,visibility] duration-200 ease-out motion-reduce:transition-none',
       // invisible để link bị ẩn không nhận Tab khi menu đóng
       open ? 'translate-x-0 shadow-[0_16px_40px_rgb(22_27_43/0.18)]' : 'invisible -translate-x-full',
       // Máy tính: luôn hiện, dính dưới thanh trên cùng khi cuộn trang
-      'lg:visible lg:sticky lg:bottom-auto lg:z-auto lg:h-[calc(100dvh-52px)] lg:w-auto lg:translate-x-0 lg:self-start lg:shadow-none',
+      'lg:sticky lg:bottom-auto lg:z-auto lg:h-[calc(100dvh-52px)] lg:w-auto lg:translate-x-0 lg:self-start lg:shadow-none',
+      collapsed ? 'lg:invisible' : 'lg:visible',
     )}>
-      <ul className="grid gap-0.5">
+      <ul className="grid gap-0.5 lg:min-w-59">
         {NAV_ITEMS.map(item => item.children ? (<NavGroup key={item.label} item={item} onNavigate={onNavigate} />) : (<NavItem key={item.to} item={item} onNavigate={onNavigate} />))}
       </ul>
-      <div className="mt-auto grid gap-0.5 border-t border-line pt-3">
+      <div className="mt-auto grid gap-0.5 border-t border-line pt-3 lg:min-w-59">
         <NavLink to="/change-password" onClick={onNavigate} className={({ isActive }) => clsx(footItem, isActive && 'bg-panel font-semibold text-ink')}>
           <KeyIcon size={17} aria-hidden="true" />
           Đổi mật khẩu

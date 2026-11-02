@@ -435,3 +435,61 @@ Một route không có `path` mà chỉ có `element` được gọi là **route
 - Điện thoại (390px): menu đóng sẵn. Mở menu rồi đóng được bằng Esc và bằng cách bấm nền tối. Bấm một mục thì chuyển trang và menu tự đóng.
 - Đăng xuất thì về `/login`. Vào lại `/news` sau khi đăng xuất thì bị chuyển về `/login`.
 - Ảnh chụp: `test/khung-1-home.png` đến `test/khung-4-mobile-menu.png`.
+
+---
+
+## Phần 3: Tin tức
+
+Code mẫu đã đưa trong chat; Phi tự gõ. Các file: `apis/newsApi.js`, `hooks/useAsync.js`, `utils/format.js`, `components/ui/{LoadingState,EmptyState,ErrorState,StatusBadge}.jsx`, `pages/NewsPage/{NewsPage,NewsFilters,NewsList,NewsPlaceholder,NewsReader,NewsComments}.jsx`, route lồng `/news` > `index` + `:newsId`.
+
+### 3.1 Rà code lần 1 (2026-11-01)
+
+Kiểm tra: so với bản đã chạy thử với API thật, `oxlint` (2 cảnh báo), `vite build` (thành công: build không phát hiện được biến chưa import nằm ngoài JSX).
+
+| File:dòng | Lỗi | Hậu quả | Cách sửa |
+|---|---|---|---|
+| `NewsReader.jsx:7` | Thiếu `Link` trong import `react-router` | Mở tin bất kỳ: `Link is not defined`, trang trắng | Thêm `Link` vào import |
+| `NewsReader.jsx` (đầu file) | Thiếu `import { formatFileSize, formatNumber } from '../../utils/format'` | `formatNumber is not defined` | Thêm dòng import |
+| `NewsReader.jsx:106` | `facts.map(fact => { <div/> })`: ngoặc nhọn mà không `return` | 4 ô Đơn vị, Hiệu lực, Đến hết, Lượt xem trống | Đổi `{ }` thành `( )` |
+| `newsApi.js` | `'/new/categories'` | API 404, không có tab chuyên mục | `'/news/categories'` |
+| `newsApi.js` | `'news/departments'` thiếu `/` | Vẫn chạy (axios tự nối `/`), nhưng không đồng bộ | `'/news/departments'` |
+| `NewsPage.jsx:17` | `params.departmentId;` | Không gửi bộ lọc đơn vị lên API | `params.departmentId = departmentId` |
+| `NewsFilters.jsx:32` | `<option value={departmentId}>` | Mọi lựa chọn mang cùng giá trị, không chọn được đơn vị | `value={department.id}` |
+| `NewsPage.jsx:78` | Thiếu `keyword={keyword}` khi gọi `NewsFilters` | `useState(undefined)`: cảnh báo uncontrolled → controlled, ô tìm bị xoá chữ sau khi tìm | Truyền thêm `keyword={keyword}` |
+| `NewsComments.jsx:60` | `<p id="comment-error">` thiếu `{error}` | Chỉ hiện icon đỏ, không có chữ | Thêm `{error}` sau icon |
+| `NewsComments.jsx:~88` | Thiếu `<p className="mt-0.5 break-words whitespace-pre-line">{comment.content}</p>` | Chỉ thấy tên và giờ, không thấy nội dung bình luận | Thêm dòng đó dưới thẻ `<p>` tên |
+| `NewsList.jsx:15` | `if (loading)` thay vì `if (!data)` | Mỗi lần đổi bộ lọc danh sách bị xoá trắng; `opacity-60`/`aria-busy` phía dưới không bao giờ dùng tới | `if (!data)` |
+| `NewsList.jsx:42` | Thiếu `<span>` bọc tên chuyên mục + lượt xem | Không hiện chuyên mục | Bọc lại như code mẫu |
+
+Không phải lỗi: `scrollbar-none` (Tailwind 4.3 có sẵn, sinh `scrollbar-width:none`), `path: 'news'` không có `/` (vẫn đúng vì route cha không có path), đổi tên `err` thành `error` trong `catch` (chỉ che biến state trong khối `catch`, vẫn đúng), `iosString` (tên biến gõ nhầm, vẫn chạy). `MAX_LENGTH = 100`: API không giới hạn, 100 ký tự hơi ngắn cho bình luận.
+
+### 3.2 Sau khi sửa (2026-11-01)
+
+Mọi lỗi trong bảng 3.1 đã được sửa. Phi tự sửa phần lớn; Claude sửa nốt `'/news/departments'`, import `formatFileSize`, và `<span>` chứa tên chuyên mục ở `NewsList.jsx`.
+
+Bài học:
+- **`vite build` thành công không có nghĩa là không thiếu import.** Build không báo lỗi khi dùng một biến chưa import mà biến đó không nằm trong JSX, ví dụ `formatNumber(...)`. `oxlint` chỉ bắt được biến thiếu trong JSX (`jsx-no-undef`, như `<Link>`).
+- **Arrow function có `{ }` phải có `return`.** Viết `map(x => ( <div/> ))` thì trả về JSX luôn. Viết `map(x => { <div/> })` thì trả về `undefined`.
+- **`value` của `<option>` phải lấy từ phần tử đang lặp** (`department.id`), không lấy từ state (`departmentId`).
+
+### 3.3 API: mỗi tài khoản chỉ tính 1 lượt xem (2026-11-02)
+
+**Trước đây:** mỗi lần gọi `GET /news/:id` đều cộng 1 vào `views`. F5 nhiều lần hoặc `StrictMode` gọi 2 lần đều làm lượt xem tăng.
+
+**Bây giờ:** có thêm bảng `news_views` ghi lại tài khoản nào đã xem tin nào.
+
+```
+GET /news/:id  (đã đăng nhập)
+  └─ NewsService.getNewsById(id, req.user.id)
+       ├─ findNewsDetail(id)                 404 nếu không có hoặc tin đã ẩn
+       ├─ recordView(id, userId)
+       │    ├─ NewsViewModel.create(...)     tạo được  → true  (lần đầu xem)
+       │    └─ UniqueConstraintError         đã có dòng → false (đã xem rồi)
+       └─ true thì news.increment("views")
+```
+
+- **Chỉ mục duy nhất `(news_id, user_id)`** khai báo trong `indexes` của model. Vì có `underscored: true`, tên cột phải viết dạng `news_id`.
+- **Vì sao không dùng `findOrCreate` hoặc "tìm rồi mới tạo":** hai request đến cùng lúc đều thấy chưa có dòng nào, nên đều cộng. Để database chặn bằng chỉ mục duy nhất là cách chắc chắn nhất.
+- **Các lỗi khác vẫn được ném ra** (`throw e`), chỉ riêng lỗi trùng mới bị bỏ qua.
+- **Cột `views` vẫn giữ** để danh sách tin không phải đếm bảng `news_views` mỗi lần tải. Nếu sau này muốn tính lại từ đầu thì đặt `views` bằng số dòng `news_views` của từng tin.
+- **Web không phải sửa gì:** API vẫn trả về `views` như cũ.

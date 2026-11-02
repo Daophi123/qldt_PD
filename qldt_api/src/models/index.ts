@@ -4,6 +4,7 @@ import { CategoryModel } from "./news/category.model";
 import { CommentModel } from "./news/comment.model";
 import { DepartmentModel } from "./news/department.model";
 import { NewsModel } from "./news/news.model";
+import { NewsViewModel } from "./news/newsView.model";
 import { UserModel } from "./user/user.model";
 import { RefreshTokenModel } from "./user/refreshToken.model";
 
@@ -17,6 +18,8 @@ NewsModel.hasMany(CommentModel, { foreignKey: "newsId", as: "comments" });
 CommentModel.belongsTo(NewsModel, { foreignKey: "newsId" });
 NewsModel.hasMany(BookMarkModel, { foreignKey: "newsId", as: "bookmarks" });
 BookMarkModel.belongsTo(NewsModel, { foreignKey: "newsId", as: "news" });
+NewsModel.hasMany(NewsViewModel, { foreignKey: "newsId", as: "viewers" });
+NewsViewModel.belongsTo(NewsModel, { foreignKey: "newsId" });
 
 export {
   DepartmentModel,
@@ -25,6 +28,7 @@ export {
   AttachmentModel,
   CommentModel,
   BookMarkModel,
+  NewsViewModel,
   UserModel,
   RefreshTokenModel
 }
