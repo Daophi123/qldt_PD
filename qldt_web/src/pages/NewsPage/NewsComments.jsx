@@ -86,7 +86,7 @@ export function NewsComments({ newsId, initialComments }) {
                   <span className="font-semibold">{comment.authorName}</span>
                   <time dateTime={comment.createdAt} className="text-xs text-muted">{formatDateTime(comment.createdAt)}</time>
                 </p>
-                <p className="mt-0.5 break-words whitespace-pre-line">{comment.content}</p>
+                <p className="mt-0.5 wrap-break-word whitespace-pre-line">{comment.content}</p>
               </div>
             </li>
           ))}

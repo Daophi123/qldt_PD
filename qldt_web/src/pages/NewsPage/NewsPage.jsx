@@ -61,8 +61,8 @@ export function NewsPage() {
   const hasFilters = Boolean(keyword || departmentId || pinnedOnly);
 
   return (
-    <>
-      <PageHeader title="Tin tức" description="Thông báo từ các phòng ban trong trường." />
+    <div className="flex flex-col lg:-mb-7 lg:h-[calc(100dvh-5.75rem)]">
+      <PageHeader title="Tin tức" />
 
       <div role="group" aria-label="Chuyên mục" className="mb-3.5 flex gap-1 overflow-x-auto border-b border-line scrollbar-none">
         {tabs.map(item => (
@@ -72,18 +72,20 @@ export function NewsPage() {
         ))}
       </div>
 
-      <div className="grid overflow-hidden rounded-xl border border-line bg-panel xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
-        <section aria-label="Danh sách tin" className={clsx('min-w-0 xl:border-r xl:border-line', newsId && 'max-xl:hidden')}>
+      <div className="grid overflow-hidden rounded-xl border border-line bg-panel lg:min-h-0 lg:flex-1 lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
+        <section aria-label="Danh sách tin" className={clsx('min-w-0 lg:flex lg:flex-col xl:border-r xl:border-line', newsId && 'max-xl:hidden')}>
           {!isSavedTab && (
             <NewsFilters key={keyword} keyword={keyword} departmentId={departmentId} pinnedOnly={pinnedOnly} departments={departments.data ?? []} onChange={updateParams} />
           )}
-          <NewsList state={list} activeId={newsId} isSavedTab={isSavedTab} hasFilters={hasFilters} linkSearch={searchParams.toString()} onPageChange={(nextPage) => updateParams({ page: nextPage })} onClearFilters={() => updateParams({ q: '', department: '', pinned: '' })} />
+          <div key={listKey} className="lg:relative lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            <NewsList state={list} activeId={newsId} isSavedTab={isSavedTab} hasFilters={hasFilters} linkSearch={searchParams.toString()} onPageChange={(nextPage) => updateParams({ page: nextPage })} onClearFilters={() => updateParams({ q: '', department: '', pinned: '' })} />
+          </div>
         </section>
 
-        <div className={clsx('min-w-0', !newsId && 'max-xl:hidden')}>
+        <div key={newsId ?? 'placeholder'} className={clsx('min-w-0 lg:relative lg:overflow-y-auto', !newsId && 'max-xl:hidden')}>
           <Outlet context={{ onBookmarkChange: isSavedTab ? list.reload : undefined }} />
         </div>
       </div>
-    </>
+    </div>
   )
 }

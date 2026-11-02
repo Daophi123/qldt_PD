@@ -2,7 +2,7 @@ import { MagnifyingGlassIcon, PushPinIcon } from "@phosphor-icons/react";
 import clsx from "clsx";
 import { useState } from "react";
 
-const controlBase = 'h-10 rounded-lg border border-line-strong bg-panel text-ink outline-none transition-[border-color,box-shadow] duration-150 focus:border-accent focus:ring-3 focus:ring-accent/15';
+const controlBase = 'h-10 xl:h-9 rounded-lg border border-line-strong bg-panel text-ink outline-none transition-[border-color,box-shadow] duration-150 focus:border-accent focus:ring-3 focus:ring-accent/15';
 
 export function NewsFilters({ keyword, departmentId, pinnedOnly, departments, onChange }) {
   const [text, setText] = useState(keyword);
@@ -36,7 +36,7 @@ export function NewsFilters({ keyword, departmentId, pinnedOnly, departments, on
         </select>
 
         <button type="button" aria-pressed={pinnedOnly} onClick={() => onChange({ pinned: !pinnedOnly })}
-          className={clsx('inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border px-3 font-medium whitespace-nowrap transition-colors duration-150', pinnedOnly ? 'border-accent/30 bg-accent-soft text-accent-hover' : 'border-line bg-panel text-muted hover:bg-canvas hover:text-ink')}  
+          className={clsx('inline-flex h-10 xl:h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-3 font-medium whitespace-nowrap transition-colors duration-150', pinnedOnly ? 'border-accent/30 bg-accent-soft text-accent-hover' : 'border-line bg-panel text-muted hover:bg-canvas hover:text-ink')}  
         >
           <PushPinIcon size={15} weight={pinnedOnly ? 'fill' : 'regular'} aria-hidden="true" />
           Tin ghim
