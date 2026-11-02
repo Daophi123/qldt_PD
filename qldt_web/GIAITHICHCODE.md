@@ -536,3 +536,55 @@ Các kỹ thuật chính:
 - **Phần nào bảng không lo:** đang tải lần đầu, lỗi, phân trang. Trang tự dùng `LoadingState`, `ErrorState`.
 
 Kiểm tra: xem mục 2026-11-02 "Component bảng dùng chung `DataTable`" trong `CHANGELOG.md`.
+
+---
+
+## Phần 5: Bước 0, các bảng đào tạo dùng chung (Phi và Dương)
+
+Theo bản đề xuất đã chốt với Dương. Claude viết thẳng vào `qldt_api` theo yêu cầu của Phi, code không có chú thích.
+
+### 5.1 Bảng
+
+| Bảng (model) | Cột | Ràng buộc |
+|---|---|---|
+| `students` (`StudentModel`) | `userId`, `studentCode`, `className`, `majorName`, `cohort` | `userId`, `studentCode` duy nhất. Họ tên lấy từ `users.fullName` |
+| `semesters` (`SemesterModel`) | `code`, `name`, `academicYear`, `startDate`, `endDate`, `registrationStart`, `registrationEnd` | `code` duy nhất, ngày dạng `DD/MM/YYYY` |
+| `courses` (`CourseModel`) | `code`, `name`, `credits` | `code` duy nhất |
+| `course_prerequisites` (`CoursePrerequisiteModel`) | `courseId`, `prerequisiteCourseId` | Cặp duy nhất. Bảng mới, thêm vào so với `PHANCHIA.md` |
+| `class_sections` (`ClassSectionModel`) | `code`, `courseId`, `semesterId`, `lecturerName`, `capacity`, `status` | `code` duy nhất. `status`: `open`, `closed`, `cancelled` (`CLASS_SECTION_STATUS`) |
+| `class_sessions` (`ClassSessionModel`) | `classSectionId`, `dayOfWeek` (2 đến 8, 8 là Chủ nhật), `startPeriod`, `endPeriod`, `room` | |
+| `enrollments` (`EnrollmentModel`) | `studentId`, `classSectionId`, `status`, `registeredAt` | Cặp (sinh viên, lớp) duy nhất. `status`: `registered`, `cancelled` (`ENROLLMENT_STATUS`) |
+
+Đây là quy tắc chung của cả hai người. Lượt đăng ký có `status: "cancelled"` không được hiện ở lịch học và lịch thi, và không được tính điểm. Khi viết code thì dùng hằng số `ENROLLMENT_STATUS`, không gõ tay chuỗi.
+
+### 5.2 Quan hệ (`models/index.ts`)
+
+- `UserModel` có một `StudentModel` (`as: "student"`). Ngược lại, `StudentModel` thuộc về `UserModel` (`as: "user"`).
+- `CourseModel.belongsToMany(CourseModel, { through: CoursePrerequisiteModel, as: "prerequisites" })`: lấy danh sách môn tiên quyết bằng `include: [{ model: CourseModel, as: "prerequisites" }]`.
+- Học phần và học kỳ có nhiều lớp. Lớp có nhiều buổi học (`as: "sessions"`) và nhiều lượt đăng ký (`as: "enrollments"`). Sinh viên có nhiều lượt đăng ký.
+- **Khi lọc theo học kỳ ở include lồng bên trong**, phải thêm `required: true` cho include của lớp. Nếu không, lượt đăng ký thuộc học kỳ khác vẫn được trả về với `classSection` bằng `null`.
+
+### 5.3 Dữ liệu mẫu
+
+- Dữ liệu nằm ở `seeds/core.seed.ts`, phần ghi vào database là `AcademicService.seedInitialData()`.
+- Gọi bằng `POST /api/v1/academic/seed`: chỉ admin, chỉ khi `NODE_ENV=development`.
+- Mọi bản ghi tìm theo mã trước khi tạo, nên gọi nhiều lần không bị trùng. Buổi học không có mã riêng, nên chỉ được tạo khi lớp của nó vừa được tạo.
+
+Kịch bản cho sinh viên `24100001`:
+- **2526-HK2 (đã học xong):** INT1002, MAT1003, ENG1002, PHY1001. Điểm do Dương seed, ENG1002 bị F.
+- **2627-HK1 (đang học):** INT2001 (2 buổi một tuần), INT2002, INT2003, MAT2001, POL1001. Có thêm lớp `2627-HK1-INT2003-02` đã huỷ đăng ký.
+- **2627-HK2 (mở đăng ký từ 01/11/2026 đến 30/11/2026):** 8 lớp.
+  - INT2005 cần qua INT2001 (đang học), ENG1003 cần qua ENG1002 (bị F).
+  - MAT2002 trùng giờ với `INT2004-01`.
+  - POL1002 hết chỗ: sĩ số 2, đã có 2 sinh viên phụ `24100002` và `24100003` đăng ký (mật khẩu `Student@123`).
+
+### 5.4 Kiểm tra
+
+Đã chạy trên bản sao database:
+- `tsc` không lỗi.
+- API khởi động thì tự tạo đủ 7 bảng.
+- Seed: lần 1 thêm 56 bản ghi, lần 2 không thêm gì. Sinh viên gọi seed thì bị 403.
+- Lịch 2627-HK1 của `24100001` có đúng 5 lớp, không có lớp đã huỷ.
+- Môn tiên quyết của ENG1003 là ENG1002.
+- Đăng ký trùng cùng một lớp bị chặn (`SequelizeUniqueConstraintError`).
+
