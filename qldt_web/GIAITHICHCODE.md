@@ -493,3 +493,46 @@ GET /news/:id  (đã đăng nhập)
 - **Các lỗi khác vẫn được ném ra** (`throw e`), chỉ riêng lỗi trùng mới bị bỏ qua.
 - **Cột `views` vẫn giữ** để danh sách tin không phải đếm bảng `news_views` mỗi lần tải. Nếu sau này muốn tính lại từ đầu thì đặt `views` bằng số dòng `news_views` của từng tin.
 - **Web không phải sửa gì:** API vẫn trả về `views` như cũ.
+
+---
+
+## Phần 4: Component dùng chung
+
+### 4.1 `components/ui/DataTable.jsx` (2026-11-02)
+
+Bảng dữ liệu dùng cho mọi trang có hàng và cột. Trang chỉ khai báo cột và truyền dữ liệu.
+
+```jsx
+<DataTable
+  caption="Danh sách văn bản"
+  columns={[
+    { key: 'code', header: 'Số hiệu', nowrap: true, className: 'text-muted' },
+    { key: 'title', header: 'Tên văn bản', className: 'min-w-56' },
+    { key: 'department', header: 'Đơn vị', render: row => row.department.name },
+    { key: 'credits', header: 'Tín chỉ', align: 'right' },
+  ]}
+  rows={items}
+  busy={loading}
+  empty={{ title: 'Chưa có văn bản nào' }}
+/>
+```
+
+| Prop | Ý nghĩa |
+|---|---|
+| `columns` | Mỗi cột: `key` (tên trường, cũng là key của cột), `header`, `render(row, index)` nếu cần hiển thị riêng, `align` (`left`, `center`, `right`), `nowrap`, `className` |
+| `rows`, `rowKey` | Dữ liệu và trường làm key của dòng (mặc định `'id'`, hoặc truyền hàm) |
+| `caption` | Tên bảng cho trình đọc màn hình (ẩn bằng `sr-only`) |
+| `minWidth` | Mặc định 640px. Hẹp hơn thì cuộn ngang. Bảng ít cột truyền `0` |
+| `busy` | Đang tải lại: giữ dữ liệu cũ, làm mờ, thêm `aria-busy` |
+| `footer` | Các thẻ `<tr>` của dòng tổng, nằm trong `<tfoot>` |
+| `empty` | Props cho `EmptyState` khi `rows` rỗng |
+
+Các kỹ thuật chính:
+- **`getCellValue`:** cột có `render` thì gọi `render(row, index)`, không thì đọc `row[column.key]`. Nhờ vậy cột đơn giản chỉ cần khai báo `key`.
+- **`alignClass` ghi đủ tên class**, vì Tailwind không sinh CSS cho tên class ghép chuỗi như `` `text-${align}` ``.
+- **`tabular-nums` cho cột căn phải:** các chữ số rộng bằng nhau nên số ở các dòng thẳng hàng.
+- **Khung `relative overflow-x-auto`:** cuộn ngang trong khung. `relative` giữ `caption` `sr-only` (position absolute) ở bên trong, nếu không cả trang sẽ cuộn thêm (lỗi đã gặp ở trang Tin tức, mục 3).
+- **`th scope="col"`:** trình đọc màn hình đọc tên cột kèm từng ô.
+- **Phần nào bảng không lo:** đang tải lần đầu, lỗi, phân trang. Trang tự dùng `LoadingState`, `ErrorState`.
+
+Kiểm tra: xem mục 2026-11-02 "Component bảng dùng chung `DataTable`" trong `CHANGELOG.md`.
