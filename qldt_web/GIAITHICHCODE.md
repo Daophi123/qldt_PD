@@ -588,3 +588,65 @@ Kịch bản cho sinh viên `24100001`:
 - Môn tiên quyết của ENG1003 là ENG1002.
 - Đăng ký trùng cùng một lớp bị chặn (`SequelizeUniqueConstraintError`).
 
+## Phần 6: Lịch học
+
+Trang `/schedule/class`: sinh viên xem các lớp đang học trong một học kỳ, theo tuần hoặc theo danh sách. Dùng các bảng của Bước 0 (Phần 5).
+
+### 6.1 API cần dùng
+
+| API | Trả về |
+|---|---|
+| `GET /api/v1/academic/semesters` | `{ items, currentCode }`. `items` xếp theo mã giảm dần, `currentCode` là học kỳ đang diễn ra |
+| `GET /api/v1/schedules/class?semesterCode=` | `{ semester, totalCredits, items }`. Bỏ `semesterCode` thì lấy học kỳ hiện tại |
+
+Mỗi phần tử của `items` là một lớp: `enrollmentId`, `classSectionCode`, `courseCode`, `courseName`, `credits`, `lecturerName`, `sessions`. Mỗi buổi trong `sessions` có `dayOfWeek`, `startPeriod`, `endPeriod`, `room`, `startTime`, `endTime`.
+
+### 6.2 Phía API
+
+- `utils/period.util.ts`: giờ bắt đầu của 12 tiết (tiết 1 lúc 06:45, tiết 7 lúc 13:00), mỗi tiết 50 phút. `getPeriodTimeRange(start, end)` đổi tiết thành giờ, ví dụ tiết 1-3 là `06:45` đến `09:25`. Giờ được tính ở API để web và các trang sau (lịch thi, đăng ký học) dùng chung một nguồn.
+- `AcademicService`:
+  - `pickCurrentSemester`: học kỳ có hôm nay nằm trong khoảng ngày học. Không có thì lấy học kỳ gần nhất đã bắt đầu.
+  - `getSemester(code?)`: có mã thì tìm theo mã (không thấy thì 404), không có mã thì lấy học kỳ hiện tại.
+- `ScheduleService.getClassSchedule(userId, semesterCode?)`:
+  - Tìm hồ sơ sinh viên theo `userId` của tài khoản đang đăng nhập. Tài khoản admin không có hồ sơ nên bị 404.
+  - Lấy lượt đăng ký `status: registered`, include lớp (`required: true`, đúng học kỳ, lớp chưa bị huỷ), trong lớp include học phần và buổi học.
+  - Kiểu `ClassSectionWithDetail` báo cho TypeScript biết lớp có thêm `course` và `sessions`.
+  - **Lưu ý:** `ClassSectionModel` là lớp học phần, `ClassSessionModel` là buổi học. Gõ nhầm hai tên này sẽ gây lỗi `Property 'dayOfWeek' does not exist` hoặc lỗi alias khi chạy.
+- Route `routes/schedule.route.ts`: `authenticate`, `validate(getClassScheduleSchema)`, gắn ở `routes.use("/schedules", ...)`.
+
+### 6.3 Phía web
+
+| File | Làm gì |
+|---|---|
+| `apis/scheduleApi.js` | Hai hàm gọi API ở 6.1, trả về `response.data.data` |
+| `utils/schedule.js` | Hàm thuần về ngày: `parseVnDate` đổi `DD/MM/YYYY` thành `Date`, `startOfWeek` lùi về thứ 2, `weeksBetween` đếm số tuần, `timeToMinutes`, `formatSessionTime` |
+| `ClassSchedulePage.jsx` | Đọc `semester` và `view` từ URL, gọi API, chọn hiện `WeekView` hay `CourseListView` |
+| `WeekView.jsx` | Lịch theo tuần |
+| `CourseListView.jsx` | Bảng học phần, dùng `DataTable` (Phần 4) |
+
+**`ClassSchedulePage`:**
+- `useSearchParams` giữ học kỳ và kiểu xem trên URL. Chưa có `?semester` thì dùng `currentCode`.
+- Gọi lịch học bằng `useAsync` với khoá `semesterCode ?? 'waiting'`: chưa có mã học kỳ thì trả `null`, có mã rồi mới gọi API, nên không gọi thừa một lần.
+- Đổi học kỳ thì dữ liệu cũ vẫn hiện, làm mờ (`opacity-60`) cho tới khi có dữ liệu mới.
+- Trang không dùng `PageHeader` để dành chỗ cho lịch. Tiêu đề là `<h1 className="sr-only">`, nhãn "Học kỳ" cũng `sr-only`: mắt không thấy nhưng trình đọc màn hình vẫn đọc. Ô chọn và nút kiểu xem cao 44px trên điện thoại, từ `sm` trở lên thu nhỏ còn 36px và 28px.
+
+**`WeekView`:**
+- `groupSessionsByDay` gom buổi học theo thứ: `{ 2: [...], 5: [...] }`. Mỗi buổi mang theo `item` (lớp) để lấy tên học phần.
+- `today` lấy bằng `useState(() => new Date())`: chỉ tính một lần, vì lint không cho gọi `new Date()` trực tiếp khi render.
+- `key={data.semester.code}` ở trang cha: đổi học kỳ thì `WeekView` được tạo lại, tuần đang xem về tuần đầu của học kỳ mới.
+- Máy tính: lưới CSS 8 cột (`56px` cột giờ và 7 cột thứ).
+  - Hàng đầu là ô góc và 7 ô tiêu đề, dính trên cùng khi lịch cuộn (`sticky top-0`). Hàng sau là cột giờ và 7 cột ngày.
+  - **Vừa màn hình:** trang cha cao đúng màn hình (`lg:h-[calc(100dvh-5.75rem)]`), lịch là `flex-1 min-h-0` nên lấy hết chỗ còn lại. Hàng thân lưới là `minmax(455px,1fr)`: giãn theo chỗ trống, nhưng không thấp hơn 35px mỗi giờ. Màn hình thấp quá thì khung lịch (`overflow-auto`) cuộn, trang không cuộn.
+  - Vì chiều cao không cố định, buổi học đặt `absolute` với `top` và `height` tính bằng **phần trăm** số phút kể từ `START_HOUR` (`toPercent`). Cột giờ là `flex-col`, mỗi giờ `flex-1`.
+  - Vạch kẻ giờ: `linear-gradient` một vạch 1px, lặp lại bằng `backgroundSize: 100% (100/13)%`.
+  - Ô buổi học hiện nội dung theo số tiết (3 tiết trở lên: tên, giờ, phòng; 2 tiết: tên và "phòng, giờ"; 1 tiết: tên), để không bị cắt chữ giữa dòng. Đủ thông tin nằm trong `title`.
+- Điện thoại (dưới `lg`): danh sách theo ngày, chỉ hiện ngày có buổi học, có nhãn "Hôm nay".
+- Ngày nằm ngoài khoảng ngày học thì không hiện buổi nào. Cả tuần nằm ngoài học kỳ thì hiện trạng thái rỗng, có nút về tuần đầu học kỳ.
+- **Ghi đè class của `Button`:** `Button` có sẵn `px-4`. Thêm `px-0` không có tác dụng vì Tailwind sinh `px-4` sau `px-0` trong CSS. Dùng `px-0!` (dấu `!` ở cuối là `!important` trong Tailwind v4).
+
+### 6.4 Kiểm tra
+
+Đã chạy API và web thật, đăng nhập `24100001`, xem 2627-HK1:
+- Tuần 9 có 6 buổi trên lưới, buổi 06:45 nằm đúng chỗ. Đổi sang Danh sách có 5 lớp, 15 tín chỉ.
+- Ở 390px hiện danh sách theo ngày, không tràn ngang.
+- Chưa thử: học kỳ không có lớp nào (trạng thái rỗng), tài khoản admin vào trang.

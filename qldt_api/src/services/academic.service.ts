@@ -1,27 +1,42 @@
 import bcrypt from "bcryptjs";
 import { environment } from "../config/environment";
 import { ApiError } from "../utils/apiError";
-import {
-  UserModel,
-  StudentModel,
-  SemesterModel,
-  CourseModel,
-  CoursePrerequisiteModel,
-  ClassSectionModel,
-  ClassSessionModel,
-  EnrollmentModel
-} from "../models";
-import {
-  SEED_STUDENT_PASSWORD,
-  SEED_STUDENTS,
-  SEED_SEMESTERS,
-  SEED_COURSES,
-  SEED_PREREQUISITES,
-  SEED_CLASS_SECTIONS,
-  SEED_ENROLLMENTS
-} from "../seeds/core.seed";
+import { UserModel, StudentModel, SemesterModel, CourseModel, CoursePrerequisiteModel, ClassSectionModel, ClassSessionModel, EnrollmentModel } from "../models";
+import { SEED_STUDENT_PASSWORD, SEED_STUDENTS, SEED_SEMESTERS, SEED_COURSES, SEED_PREREQUISITES, SEED_CLASS_SECTIONS, SEED_ENROLLMENTS } from "../seeds/core.seed";
+import { toISODate, toVietnamISO } from "../utils/date.util";
 
 export class AcademicService {
+  private static pickCurrentSemester(semesters: SemesterModel[]) {
+    const today = toVietnamISO().slice(0, 10);
+    const running = semesters.find(semester => toISODate(semester.startDate) <= today && today <= toISODate(semester.endDate));
+    if(running) return running;
+
+    const started = semesters.filter(semester => toISODate(semester.startDate) <= today).sort((a, b) => toISODate(b.startDate).localeCompare(toISODate(a.startDate)));
+    return started[0] ?? semesters[0] ?? null;
+  }
+
+  public static async getSemesters() {
+    const semesters = await SemesterModel.findAll({ order: [["code", "DESC"]] });
+    const current = this.pickCurrentSemester(semesters);
+    return { items: semesters, currentCode: current?.code ?? null };
+  }
+
+  public static async getSemester(code?: string) {
+    if(code) {
+      const semester = await SemesterModel.findOne({ where: { code } });
+      if(!semester) {
+        throw new ApiError("404", "Không tin thấy học kỳ");
+      }
+      return semester;
+    }
+
+    const current = this.pickCurrentSemester(await SemesterModel.findAll());
+    if(!current) {
+      throw new ApiError("404", "Chưa có học kỳ nào");
+    }
+    return current;
+  }
+
   public static async seedInitialData() {
     if(environment.NODE_ENV !== "development") {
       throw new ApiError("403", "Chỉ được khởi tạo dữ liệu mẫu ở môi trường development");
