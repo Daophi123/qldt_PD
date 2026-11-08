@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get("/semesters", AcademicController.getSemesters);
 router.post("/seed", authorize("admin"), AcademicController.seedData);
 
 export default router;

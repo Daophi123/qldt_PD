@@ -10,8 +10,9 @@ import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage';
 import { NewsPage } from '../pages/NewsPage/NewsPage';
 import { NewsPlaceholder } from '../pages/NewsPage/NewsPlaceholder';
 import { NewsReader } from '../pages/NewsPage/NewsReader';
+import { ClassSchedulePage } from '../pages/ClassSchedulePage/ClassSchedulePage';
 
-const BUILT_PATHS = ['/', '/news']
+const BUILT_PATHS = ['/', '/news', '/schedule/class']
 const comingSoonRoutes = NAV_LINKS.filter(link => !BUILT_PATHS.includes(link.to)).map(link => ({ path: link.to, element: <ComingSoonPage /> }))
 
 export const router = createBrowserRouter([
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
               { path: ':newsId', element: <NewsReader /> }
             ]
           },
+          { path: 'schedule/class', element: <ClassSchedulePage /> },
           ...comingSoonRoutes
         ],
       },

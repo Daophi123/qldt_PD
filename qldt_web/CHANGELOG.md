@@ -13,6 +13,84 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-03 (Phi): Lịch học gọn phần đầu trang
+
+### Sửa
+- `ClassSchedulePage.jsx`:
+  - Bỏ `PageHeader` (đường dẫn "Thời khóa biểu > Lịch học", tiêu đề "Lịch học", dòng "Học kỳ 1, năm học ... tín chỉ"). Giữ một `<h1 className="sr-only">Lịch học</h1>` cho trình đọc màn hình.
+  - Ô chọn học kỳ và nút Tuần / Danh sách nhỏ lại, nằm chung một hàng: ô chọn cao 36px, nút cao 28px, chữ 14px. Nhãn "Học kỳ" chuyển thành `sr-only` (vẫn nối với ô chọn qua `htmlFor`).
+  - Trên điện thoại vẫn giữ vùng bấm 44px (ô chọn `h-11`, nút `h-10`), chỉ thu nhỏ từ `sm` trở lên.
+  - Đặt lại khung cao đúng màn hình cho kiểu Tuần (`fitScreen`), vì bản trong máy đã mất phần này. Dòng ghi chú giờ tiết ở cuối trang Phi đã tự bỏ, giữ nguyên.
+- `WeekView.jsx`: hàng giờ tối thiểu từ 36px xuống 35px (`minmax(455px,1fr)`), để màn hình 1280x720 không phải cuộn lịch.
+
+### Đã kiểm tra
+- 1440x900 và 1280x720: trang không cuộn, lịch không cuộn. 390px không tràn ngang.
+- `oxlint` sạch, `vite build` thành công. Cập nhật ảnh `test/lich-hoc-1-tuan.png`, `test/lich-hoc-3-mobile.png`.
+
+---
+
+## 2026-11-02 (Phi): Lịch tuần vừa màn hình, không cuộn cả trang
+
+### Sửa
+- `ClassSchedulePage.jsx`: ở kiểu Tuần, trên máy tính (`lg`) trang cao đúng màn hình (`lg:h-[calc(100dvh-5.75rem)] lg:-mb-7`, giống trang Tin tức). Phần lịch chiếm chỗ còn lại (`flex-1 min-h-0`). Kiểu Danh sách và điện thoại giữ như cũ.
+- `WeekView.jsx`:
+  - Bỏ chiều cao cố định 56px mỗi giờ. Lưới giãn theo chỗ trống, vị trí buổi học tính bằng phần trăm.
+  - Hàng giờ tối thiểu 36px (`minmax(468px,1fr)` cho 13 giờ). Màn hình thấp hơn thì chỉ khung lịch cuộn, hàng tiêu đề thứ dính trên cùng (`sticky top-0`).
+  - Nội dung ô buổi học theo số tiết: 3 tiết trở lên hiện tên, giờ, phòng. 2 tiết hiện tên và một dòng "phòng, giờ". 1 tiết chỉ hiện tên. Di chuột vào ô thấy đủ thông tin (`title`).
+
+### Ý tưởng / quyết định
+- Phi muốn không cuộn trang, nếu khó thì cuộn trong lịch. Làm cả hai: đủ cao thì không cuộn gì, không đủ thì chỉ lịch cuộn, trang không cuộn.
+
+### Đã kiểm tra
+- 1440x900 và 1920x1080: trang và lịch đều không cuộn. 1280x720: trang không cuộn, lịch cuộn 159px, tiêu đề thứ đứng yên.
+- Không ô buổi học nào bị cắt chữ giữa dòng. Kiểu Danh sách không cuộn trang. 390px không tràn ngang.
+- `oxlint` sạch, `vite build` thành công. Cập nhật ảnh `test/lich-hoc-1-tuan.png`.
+
+---
+
+## 2026-11-02 (Phi): Trang Lịch học
+
+### Thêm
+- Trang `/schedule/class` (menu Thời khóa biểu > Lịch học). Phi tự gõ theo code mẫu, Claude sửa lỗi sau khi rà ("sửa hộ").
+  - `src/apis/scheduleApi.js`: `getSemesters()` gọi `GET /academic/semesters`, `getClassSchedule(semesterCode)` gọi `GET /schedules/class`.
+  - `src/utils/schedule.js`: hàm thuần cho ngày tháng (`parseVnDate`, `startOfWeek`, `addDays`, `weeksBetween`, `formatDayMonth`...) và nhãn thứ (`DAY_LABELS`, 8 là Chủ nhật).
+  - `src/pages/ClassSchedulePage/ClassSchedulePage.jsx`: chọn học kỳ, chuyển kiểu xem Tuần / Danh sách, đủ trạng thái đang tải, lỗi, rỗng.
+  - `WeekView.jsx`: lưới tuần theo giờ (06:00 đến 19:00) trên máy tính, danh sách theo ngày trên điện thoại, nút tuần trước / tuần sau / tuần này.
+  - `CourseListView.jsx`: bảng học phần dùng `DataTable`, dòng tổng tín chỉ.
+- `routes/index.jsx`: thêm `/schedule/class` vào `BUILT_PATHS` và route thật thay `ComingSoonPage`.
+
+### Sửa (sau khi rà code Phi gõ)
+- API trả 404 vì route gắn ở `/schedule`, web gọi `/schedules`. Đổi thành `routes.use("/schedules", ...)` trong `qldt_api/src/routes/index.ts`.
+- `schedule.service.ts`: include `as: "sessions"` dùng nhầm `ClassSectionModel`, đổi thành `ClassSessionModel`. Sửa chữ "Tài khoảng".
+- `ClassSchedulePage.jsx`:
+  - Toàn bộ nội dung bị bọc trong `<PageHeader>...</PageHeader>`, mà `PageHeader` không hiện `children`, nên trang chỉ có tiêu đề. Đổi thành `<PageHeader ... />` tự đóng.
+  - `semesters.data?.item` thành `items` (ô chọn học kỳ bị rỗng).
+  - Nhãn học kỳ: thêm năm học, "(hiện tại)" chỉ gắn cho học kỳ có `code === currentCode`.
+  - Thiếu `import { Link }` (trạng thái rỗng sẽ lỗi).
+- `WeekView.jsx`:
+  - `item.session` thành `item.sessions` (lỗi `item.session is not iterable`, trang trắng).
+  - 7 ô tiêu đề thứ bị lồng trong ô góc trái, và thiếu cột giờ. Tách ô góc thành `<div ... />`, thêm cột giờ.
+  - Nút mũi tên tuần: `px-0` thua `px-4` của `Button` nên icon bị bóp còn 6px. Đổi thành `px-0!`.
+- `CourseListView.jsx`: "Danh sach" thành "Danh sách" trong `caption`.
+
+### Ý tưởng / quyết định
+- **Giờ tiết lấy từ API** (`period.util.ts` của Phi: tiết 1 lúc 06:45, tiết 7 lúc 13:00, mỗi tiết 50 phút, nghỉ 5 phút). Lưới tuần bắt đầu từ 06:00 (`START_HOUR = 6`) để buổi 06:45 không bị cắt.
+- **Học kỳ và kiểu xem nằm trên URL** (`?semester=2627-HK1&view=list`): tải lại trang hoặc gửi link vẫn giữ nguyên.
+- **Tuần mở ra đầu tiên** là tuần hiện tại nếu hôm nay thuộc học kỳ, không thì tuần đầu học kỳ.
+
+### Đã kiểm tra
+- Chạy API và web thật, đăng nhập `24100001`:
+  - Ô học kỳ có 3 học kỳ, 2627-HK1 có "(hiện tại)". Tuần 9 (02/11 đến 08/11/2026) có 6 buổi, buổi 06:45 nằm đúng vị trí.
+  - Kiểu Danh sách có 5 dòng, tổng 15 tín chỉ.
+  - Ở 390px là danh sách theo ngày, trang không tràn ngang. Không có lỗi console.
+- `oxlint` sạch, `vite build` thành công, `tsc` của API không lỗi.
+- Ảnh chụp: `test/lich-hoc-1-tuan.png`, `test/lich-hoc-2-danh-sach.png`, `test/lich-hoc-3-mobile.png`.
+
+### Việc tiếp theo
+- Sửa chữ "Không tin thấy học kỳ" thành "Không tìm thấy học kỳ" trong `academic.service.ts`.
+
+---
+
 ## 2026-11-02 (Phi): Component bảng dùng chung `DataTable`
 
 ### Thêm
