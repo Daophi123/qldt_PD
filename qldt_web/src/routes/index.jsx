@@ -11,8 +11,12 @@ import { NewsPage } from '../pages/NewsPage/NewsPage';
 import { NewsPlaceholder } from '../pages/NewsPage/NewsPlaceholder';
 import { NewsReader } from '../pages/NewsPage/NewsReader';
 import { ClassSchedulePage } from '../pages/ClassSchedulePage/ClassSchedulePage';
+import { DocumentPage } from '../pages/DocumentPage/DocumentPage';
+import { ExamSchedulePage } from '../pages/ExamSchedulePage/ExamSchedulePage';
+import { ProgramPage } from '../pages/ProgramPage/ProgramPage';
+import { GradePage } from '../pages/GradePage/GradePage';
 
-const BUILT_PATHS = ['/', '/news', '/schedule/class']
+const BUILT_PATHS = ['/', '/news', '/schedule/class', '/document', '/schedule/exam', '/study-corner/program', '/study-corner/grade']
 const comingSoonRoutes = NAV_LINKS.filter(link => !BUILT_PATHS.includes(link.to)).map(link => ({ path: link.to, element: <ComingSoonPage /> }))
 
 export const router = createBrowserRouter([
@@ -35,6 +39,10 @@ export const router = createBrowserRouter([
             ]
           },
           { path: 'schedule/class', element: <ClassSchedulePage /> },
+          { path: 'document', element: <DocumentPage /> },
+          { path: 'schedule/exam', element: <ExamSchedulePage /> },
+          { path: 'study-corner/program', element: <ProgramPage /> },
+          { path: 'study-corner/grade', element: <GradePage /> },
           ...comingSoonRoutes
         ],
       },

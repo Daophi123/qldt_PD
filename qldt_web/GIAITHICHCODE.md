@@ -650,3 +650,184 @@ Mỗi phần tử của `items` là một lớp: `enrollmentId`, `classSectionCo
 - Tuần 9 có 6 buổi trên lưới, buổi 06:45 nằm đúng chỗ. Đổi sang Danh sách có 5 lớp, 15 tín chỉ.
 - Ở 390px hiện danh sách theo ngày, không tràn ngang.
 - Chưa thử: học kỳ không có lớp nào (trạng thái rỗng), tài khoản admin vào trang.
+
+---
+
+## Phần 7: Văn bản (Dương)
+
+### 7.1 API
+- `GET /api/v1/documents?page=1&limit=10&keyword=&type=&departmentId=`: cần đăng nhập. `type` là `regulation`, `rule`, `guide` hoặc `form`. Trả `{ items, pagination }`. Mỗi văn bản có `department { id, code, name }` và `files [...]`.
+- `POST /api/v1/documents/seed`: admin, chỉ development. Cần seed tin tức trước để có bảng `departments`.
+
+### 7.2 Từng file
+| File | Làm gì |
+|---|---|
+| `models/document/document.model.ts` | Bảng `documents`: số hiệu (không trùng), tên, tóm tắt, loại, đơn vị, ngày ban hành `DD/MM/YYYY`, còn hiệu lực |
+| `models/document/documentFile.model.ts` | Bảng `document_files`: tệp của văn bản (tên, link, dung lượng, đuôi) |
+| `seeds/document.seed.ts` | 8 văn bản mẫu, đơn vị ghi bằng mã (PDT, PDBCL...) |
+| `validations/document.validation.ts` | Kiểm tra `page`, `limit` (tối đa 100), `type` |
+| `services/document.service.ts` | Ghép điều kiện lọc, `findAndCountAll`, sắp ngày ban hành mới nhất trước |
+| `controllers/document.controller.ts`, `routes/document.route.ts` | Nối đường dẫn `/documents` với service |
+| `apis/documentApi.js` | `getList(params)` |
+| `pages/DocumentPage/DocumentPage.jsx` | Ô tìm (nhấn Enter), 2 ô chọn, `DataTable` |
+
+### 7.3 Kỹ thuật chính
+- Ngày lưu dạng chữ `DD/MM/YYYY`, nên sắp xếp bằng `literal("substr(issued_date, 7, 4) || ...")` để đổi thành `YYYYMMDD` rồi mới so.
+- Tìm theo từ khoá: `Op.or` với `Op.like` trên số hiệu và tên.
+- Web: chữ đang gõ (`text`) tách khỏi từ khoá đã tìm (`keyword`), để chỉ gọi API khi nhấn Enter. Khoá của `useAsync` là `keyword|type|departmentId`, đổi một cái là tải lại.
+
+### 7.4 Kiểm tra
+Seed, mở `/document`, chọn "Biểu mẫu" ra 3 văn bản, tìm "1520" ra 1 văn bản.
+
+---
+
+## Phần 8: Lịch thi (Dương)
+
+### 8.1 API
+- `GET /api/v1/exams?semesterCode=2627-HK1`: cần đăng nhập bằng tài khoản có hồ sơ sinh viên. Bỏ `semesterCode` thì lấy học kỳ hiện tại.
+  - Trả `{ semester: { code, name, academicYear }, items: [{ id, examDate, startTime, durationMinutes, format, courseCode, courseName, credits, room, seatNumber }] }`.
+  - `room` và `seatNumber` là `null` khi chưa xếp phòng.
+  - Lỗi: 404 không có hồ sơ sinh viên hoặc sai mã học kỳ, 401 chưa đăng nhập.
+- `POST /api/v1/exams/seed`: admin, chỉ development. Cần seed học vụ trước (lớp và sinh viên).
+
+### 8.2 Bảng
+| Bảng | Cột | Nối tới |
+|---|---|---|
+| `exams` (kỳ thi) | `class_section_id` (không trùng), `exam_date`, `start_time`, `duration_minutes`, `format` | `class_sections` |
+| `exam_rooms` (xếp phòng thi) | `exam_id`, `student_id`, `room`, `seat_number`. Cặp `exam_id + student_id` không trùng | `exams`, `students` |
+
+### 8.3 Từng file
+| File | Làm gì |
+|---|---|
+| `models/exam/exam.model.ts`, `examRoom.model.ts` | Hai bảng trên |
+| `models/index.ts` | `ExamModel.belongsTo(ClassSectionModel)`, `ExamModel.hasMany(ExamRoomModel, as "rooms")` |
+| `seeds/exam.seed.ts` | 9 lịch thi cho `24100001`, POL1001 chưa xếp phòng |
+| `services/exam.service.ts` | `getExamSchedule(userId, semesterCode)` và `seedInitialData()` |
+| `controllers/exam.controller.ts`, `routes/exam.route.ts` | Đường dẫn `/exams` |
+| `apis/examApi.js` | `getMySchedule(semesterCode)` |
+| `pages/ExamSchedulePage/ExamSchedulePage.jsx` | Ô chọn học kỳ và `DataTable` 7 cột |
+
+### 8.4 Kỹ thuật chính
+- Service đi 3 bước: tìm sinh viên theo `userId`, lấy các lớp đã đăng ký trong học kỳ (giống Lịch học của Phi: bỏ đăng ký huỷ và lớp huỷ), rồi lấy `exams` của các lớp đó.
+- Lấy phòng thi của riêng sinh viên này bằng `include` `rooms` có `where: { studentId }` và `required: false`. `required: false` để môn chưa xếp phòng vẫn hiện ra (giống LEFT JOIN).
+- Sắp xếp: đổi ngày sang `YYYY-MM-DD` bằng `toISODate` rồi nối giờ, so sánh như chữ.
+- Web: học kỳ đang chọn là `pickedCode || semesters.data?.currentCode`. Chưa chọn thì dùng học kỳ hiện tại. Thứ trong tuần tính bằng `new Date(năm, tháng - 1, ngày).getDay()`. Trạng thái "Đã thi" so ngày thi với hôm nay.
+
+### 8.5 Kiểm tra (2026-11-09, API và web thật, `24100001`)
+- 2627-HK1: 5 môn, 4 "Đã xếp phòng", POL1001 "Chờ xếp phòng".
+- 2526-HK2: 4 môn "Đã thi". 2627-HK2: "Chưa có lịch thi".
+- Sai mã học kỳ 404, chưa đăng nhập 401, sinh viên gọi seed 403.
+- Chưa thử: điện thoại.
+
+---
+
+## Phần 9: Chương trình học (Dương)
+
+### 9.1 API
+- `GET /api/v1/programs/my`: cần đăng nhập bằng tài khoản có hồ sơ sinh viên.
+  - Trả `{ program: { code, name, majorName, cohort }, totalCredits, blocks: [{ name, courseCount, credits }], items: [{ id, courseCode, courseName, credits, knowledgeBlock, isRequired, semesterNo, prerequisites: [{ code, name }], actualSemester }] }`.
+  - `actualSemester` là chữ như "Học kỳ 2, 2025-2026", hoặc `null` khi chưa đăng ký học.
+  - Lỗi 404: không có hồ sơ sinh viên, hoặc chưa có chương trình cho ngành và khoá đó.
+- `POST /api/v1/programs/seed`: admin, chỉ development. Cần seed học vụ trước.
+
+### 9.2 Bảng
+| Bảng | Cột | Nối tới |
+|---|---|---|
+| `programs` | `code` (không trùng), `name`, `major_name`, `cohort`. Cặp ngành + khoá không trùng | `students` qua ngành + khoá (không có khoá ngoại) |
+| `program_courses` | `program_id`, `course_id`, `knowledge_block`, `semester_no`, `is_required`. Cặp chương trình + học phần không trùng | `programs`, `courses` |
+
+### 9.3 Kỹ thuật chính
+- Tìm chương trình theo `majorName` và `cohort` của sinh viên, nên không phải thêm cột vào bảng `students` dùng chung.
+- `include` lồng: `ProgramCourse → course → prerequisites` (quan hệ nhiều-nhiều của Phi). `through: { attributes: [] }` để không trả các cột của bảng trung gian.
+- Học kỳ thực tế: lấy các đăng ký `registered` của sinh viên kèm lớp và học kỳ, cho vào `Map` có khoá là `courseId`.
+- Khối kiến thức: duyệt danh sách học phần, cộng dồn số học phần và tín chỉ cho từng khối.
+- Web: tìm kiếm lọc ngay trên mảng đã tải (`filter` + `includes`), không gọi lại API. Các khối kiến thức là hàng thẻ phía trên bảng (`grid-cols-[repeat(auto-fill,minmax(220px,1fr))]`), để bảng dùng hết chiều ngang.
+- Cửa sổ chi tiết khối (`BlockDialog.jsx`): dùng thẻ `<dialog>` của trình duyệt. `showModal()` trong `useEffect` khi cửa sổ vừa hiện. Trình duyệt tự lo phím Esc, che nền (`backdrop:bg-ink/40`), giữ con trỏ bàn phím trong cửa sổ. Sự kiện `onClose` báo trang đặt `openBlock` về `null`. Bấm ra vùng tối: `event.target === dialogRef.current`. Cần `m-auto` vì Tailwind xoá lề mặc định của `<dialog>`.
+
+### 9.4 Kiểm tra (2026-11-09, API và web thật, `24100001`)
+- 15 học phần, 44 tín chỉ, 3 khối. Gõ "tiếng anh" còn 2 dòng.
+- Admin 404, chưa đăng nhập 401, sinh viên gọi seed 403.
+- Chưa thử: điện thoại.
+
+---
+
+## Phần 10: Tra cứu điểm (Dương)
+
+### 10.1 API
+- `GET /api/v1/grades/my`: cần đăng nhập bằng tài khoản có hồ sơ sinh viên.
+  - Trả `{ student: { studentCode, fullName, className, majorName }, summary: { programCredits, attemptedCredits, earnedCredits, gpa10, gpa4, cumulativeGpa10, cumulativeGpa4 }, semesters: [{ code, name, academicYear, items, summary }] }`.
+  - Mỗi `items[]`: `{ id, classSectionCode, lecturerName, courseCode, courseName, credits, attempt, processScore, examScore, score10, score4, letter, passed }`. Chưa có điểm thì các trường điểm và `passed` là `null`.
+  - `semesters[].summary`: `{ credits, gpa10, gpa4, earnedCredits, cumulativeGpa10, cumulativeGpa4 }`.
+- `POST /api/v1/grades/seed`: admin, chỉ development. Cần seed học vụ trước.
+
+### 10.2 Hàm dùng chung cho Phi
+```ts
+import { GradeService } from "./grade.service";
+const passedCourseIds = await GradeService.getPassedCourseIds(student.id); // string[] courses.id
+```
+- Qua môn khi điểm tổng hệ 10 ≥ 4,0. Chỉ tính đăng ký `registered`. Môn học nhiều lần, có một lần qua là tính qua.
+- Đăng ký học không đọc thẳng bảng `grades`, để sau này đổi cách lưu điểm thì chỉ sửa hàm này.
+
+### 10.3 Bảng `grades`
+| Cột | Ý nghĩa |
+|---|---|
+| `enrollment_id` (không trùng) | Nối tới `enrollments`: điểm của một lần sinh viên học một lớp |
+| `process_score` | Điểm quá trình hệ 10 |
+| `exam_score` | Điểm thi hệ 10 |
+
+Điểm tổng, hệ 4, điểm chữ không lưu mà tính khi đọc.
+
+### 10.4 Kỹ thuật chính
+- `getTotalScore`: `Math.round(quáTrình * 3 + thi * 7) / 10`. Nhân 3 và 7 trước rồi chia 10 để tránh sai số làm tròn của số thực (7,65 lưu trong máy là 7,6499...).
+- `SCALE` sắp từ cao xuống thấp, `find` lấy mức đầu tiên thoả `score10 >= min`.
+- `average(list)`: trung bình có trọng số theo tín chỉ, làm tròn 2 chữ số.
+- Duyệt các lần đăng ký theo học kỳ cũ đến mới. `attemptByCourse` (Map) đếm lần học. `passedByCourse` (Map) giữ lần qua mới nhất của mỗi môn để tính tích luỹ.
+- Web: `GradeDialog.jsx` làm giống `BlockDialog.jsx` (thẻ `<dialog>`, `showModal()`). `formatScore` đổi số sang dạng Việt Nam (7,7), `null` thành "-". Đặt trong thư mục trang vì `utils/format.js` là file của Phi.
+
+### 10.5 Kiểm tra (2026-11-09, `24100001`)
+- 2 học kỳ: 2627-HK1 "Chưa có điểm", 2526-HK2 có 4 điểm, PHY1001 "Học lại".
+- Tổng kết toàn khoá: 44 tín chỉ chương trình, 12 đã học, 9 tích luỹ, TB 6,50 / 2,25, tích luỹ 7,57 / 3,00.
+- `getPassedCourseIds`: 3 học phần.
+
+---
+
+## Phần 11: Khối trang chủ và component bộ lọc (Dương)
+
+### 11.1 Khối trang chủ (`pages/HomePage/widgets/`)
+Phi ghép vào `HomePage.jsx`, ví dụ:
+```jsx
+import { UpcomingExamsWidget } from './widgets/UpcomingExamsWidget'
+import { GradeSummaryWidget } from './widgets/GradeSummaryWidget'
+
+{user.role === 'student' && (
+  <div className="grid grid-cols-2 gap-4">
+    <UpcomingExamsWidget />
+    <GradeSummaryWidget />
+  </div>
+)}
+```
+| File | Làm gì | API |
+|---|---|---|
+| `UpcomingExamsWidget.jsx` | Tối đa 3 môn thi từ hôm nay trở đi | `GET /exams` (không truyền học kỳ = học kỳ hiện tại) |
+| `GradeSummaryWidget.jsx` | TB tích luỹ hệ 4, hệ 10, tín chỉ tích luỹ, tín chỉ đã học | `GET /grades/my`, chỉ dùng `summary` |
+
+- Mỗi khối là một `<section>` có tiêu đề và link sang trang đầy đủ, tự có trạng thái đang tải, lỗi, rỗng. Không nhận props.
+- Lọc "từ hôm nay": đổi ngày `DD/MM/YYYY` thành `YYYYMMDD` (`toSortable`) rồi so sánh chuỗi. API đã sắp xếp theo ngày nên chỉ cần `slice(0, 3)`.
+- Hàm ngày nằm ở `pages/ExamSchedulePage/examDate.js`, dùng chung với trang Lịch thi.
+
+### 11.2 `SearchInput` và `Select` (`components/form/`)
+```jsx
+<SearchInput id="document-keyword" label="Tìm theo số hiệu..." value={text}
+  onChange={event => setText(event.target.value)} onSubmit={handleSearch} className="w-80" />
+
+<Select id="document-type" label="Loại văn bản" value={type} onChange={event => setType(event.target.value)}>
+  <option value="">Mọi loại văn bản</option>
+</Select>
+```
+- `id`, `label` bắt buộc. Nhãn có class `sr-only`: không hiện trên màn hình nhưng trình đọc màn hình vẫn đọc, và nối với ô qua `htmlFor`.
+- `...inputProps` / `...selectProps`: các thuộc tính còn lại truyền thẳng vào thẻ gốc, nên dùng như `<input>`, `<select>` bình thường.
+- `SearchInput` luôn bọc trong `<form role="search">` và chặn tải lại trang khi nhấn Enter. Có `onSubmit` thì gọi, không có thì thôi.
+- Class chung nằm ở `controlClass.js`. Đang dùng ở Văn bản, Lịch thi, Chương trình học.
+
+### 11.3 Kiểm tra (2026-11-09)
+- Xem mục CHANGELOG cùng ngày. Hai khối được thử bằng cách gắn tạm vào trang Lịch thi, chưa thử trên `HomePage.jsx` thật.
