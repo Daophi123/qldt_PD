@@ -125,7 +125,7 @@ Không tránh được hoàn toàn, nhưng đều là xung đột nhỏ. Gặp x
 
 ### Component dùng chung trên web (`qldt_web/src/components/`)
 
-Đã có: `Button`, `TextField`, `PasswordField`, `FullPageLoader`, `Logo`, `PageHeader`.
+Đã có: `Button`, `TextField`, `PasswordField`, `FullPageLoader`, `Logo`, `PageHeader`, `SearchInput` và `Select` (Dương, trong `components/form/`).
 
 | Component | Người viết | Dùng ở |
 |---|---|---|
