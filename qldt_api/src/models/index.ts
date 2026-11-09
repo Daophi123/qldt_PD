@@ -14,6 +14,13 @@ import { CoursePrerequisiteModel } from "./academic/coursePrerequisite.model";
 import { ClassSectionModel } from "./academic/classSection.model";
 import { ClassSessionModel } from "./academic/classSession.model";
 import { EnrollmentModel } from "./academic/enrollment.model";
+import { DocumentModel } from "./document/document.model";
+import { DocumentFileModel } from "./document/documentFile.model";
+import { ExamModel } from "./exam/exam.model";
+import { ExamRoomModel } from "./exam/examRoom.model";
+import { ProgramModel } from "./program/program.model";
+import { ProgramCourseModel } from "./program/programCourse.model";
+import { GradeModel } from "./grade/grade.model";
 
 NewsModel.belongsTo(DepartmentModel, { foreignKey: "departmentId", as: "department" });
 DepartmentModel.hasMany(NewsModel, { foreignKey: "departmentId", as: "news" });
@@ -42,6 +49,18 @@ EnrollmentModel.belongsTo(ClassSectionModel, { foreignKey: "classSectionId", as:
 StudentModel.hasMany(EnrollmentModel, { foreignKey: "studentId", as: "enrollments" });
 EnrollmentModel.belongsTo(StudentModel, { foreignKey: "studentId", as: "student" });
 
+DocumentModel.belongsTo(DepartmentModel, { foreignKey: "departmentId", as: "department" });
+DocumentModel.hasMany(DocumentFileModel, { foreignKey: "documentId", as: "files" });
+DocumentFileModel.belongsTo(DocumentModel, { foreignKey: "documentId", as: "document" });
+ExamModel.belongsTo(ClassSectionModel, { foreignKey: "classSectionId", as: "classSection" });
+ExamModel.hasMany(ExamRoomModel, { foreignKey: "examId", as: "rooms" });
+ExamRoomModel.belongsTo(ExamModel, { foreignKey: "examId", as: "exam" });
+ProgramModel.hasMany(ProgramCourseModel, { foreignKey: "programId", as: "courses" });
+ProgramCourseModel.belongsTo(ProgramModel, { foreignKey: "programId", as: "program" });
+ProgramCourseModel.belongsTo(CourseModel, { foreignKey: "courseId", as: "course" });
+GradeModel.belongsTo(EnrollmentModel, { foreignKey: "enrollmentId", as: "enrollment" });
+EnrollmentModel.hasOne(GradeModel, { foreignKey: "enrollmentId", as: "grade" });
+
 export {
   DepartmentModel,
   CategoryModel,
@@ -58,5 +77,12 @@ export {
   CoursePrerequisiteModel,
   ClassSectionModel,
   ClassSessionModel,
-  EnrollmentModel
+  EnrollmentModel,
+  DocumentModel,
+  DocumentFileModel,
+  ExamModel,
+  ExamRoomModel,
+  ProgramModel,
+  ProgramCourseModel,
+  GradeModel
 }

@@ -13,6 +13,153 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-09 (Dương): Khối trang chủ "Lịch thi sắp tới", "Kết quả học tập" và component `SearchInput`, `Select`
+
+### Thêm
+- `pages/HomePage/widgets/UpcomingExamsWidget.jsx`: tối đa 3 môn thi từ hôm nay trở đi của học kỳ hiện tại (gọi `examApi.getMySchedule()` không truyền học kỳ). Mỗi dòng: ngày, thứ, giờ, tên môn, phòng và số báo danh (hoặc "Chưa xếp phòng"). Link "Xem tất cả" sang `/schedule/exam`.
+- `pages/HomePage/widgets/GradeSummaryWidget.jsx`: điểm TB tích luỹ hệ 4 và hệ 10, tín chỉ tích luỹ / tín chỉ chương trình, tín chỉ đã học (gọi `gradeApi.getMyGrades()`, chỉ dùng `summary`). Link "Xem bảng điểm" sang `/study-corner/grade`.
+- Cả hai khối tự lo trạng thái đang tải, lỗi, rỗng; không nhận props. **Chưa ghép vào `HomePage.jsx`**, việc ghép là của Phi.
+- `components/form/SearchInput.jsx`: ô tìm kiếm có kính lúp, nhãn ẩn (`sr-only`), `onSubmit` không bắt buộc (gọi khi nhấn Enter).
+- `components/form/Select.jsx`: ô chọn có nhãn ẩn, `children` là các `<option>`.
+- `components/form/controlClass.js`: chuỗi class chung của hai component trên.
+- `pages/ExamSchedulePage/examDate.js`: `getWeekday`, `toSortable`, `getTodaySortable` (tách từ trang Lịch thi để khối trang chủ dùng lại).
+
+### Sửa
+- Văn bản, Lịch thi, Chương trình học: thay ô `<input type="search">` và `<select>` tự viết bằng `SearchInput`, `Select`. Hành vi giữ nguyên (Văn bản tìm khi nhấn Enter, Chương trình học lọc ngay khi gõ). Ô có thêm kính lúp và viền sáng khi chọn, giống ô tìm của Tin tức.
+- `PHANCHIA.md`: thêm `SearchInput`, `Select` vào dòng "Đã có" của bảng component.
+
+### Ý tưởng / quyết định
+- Không sửa `HomePage.jsx` và `NewsFilters.jsx` vì là file của Phi. Phi tự đổi Tin tức sang `SearchInput`, `Select` khi muốn.
+- Khối trang chủ gọi lại API đã có, không thêm API mới.
+- Admin không có hồ sơ sinh viên nên hai khối hiện lỗi "Tài khoản này không có hồ sơ sinh viên". Đề nghị Phi chỉ hiện hai khối khi `user.role === 'student'`.
+
+### Đã kiểm tra
+- `oxlint` sạch, `vite build` thành công.
+- Trình duyệt 1280x900, `24100001`: gắn tạm hai khối vào trang Lịch thi để xem (đã gỡ, `HomePage.jsx` không đổi). "Lịch thi sắp tới" hiện 04/01, 06/01, 08/01/2027 đúng phòng và số báo danh. "Kết quả học tập": 3,00 / 7,57 / 9 / 44 / 12, khớp trang Tra cứu điểm.
+- Admin: hai khối hiện thông báo lỗi, trang không vỡ.
+- Văn bản: tìm "quy chế" + Enter còn 1 dòng (từ 8), lọc "Biểu mẫu" còn 3 dòng. Chương trình học: gõ "INT" còn 7 dòng, nhấn Enter không tải lại trang. Lịch thi: ô chọn học kỳ đủ 3 học kỳ.
+- Chưa thử: điện thoại; khối trang chủ khi đã ghép thật vào `HomePage.jsx`.
+
+### Việc tiếp theo
+- Phi ghép hai khối vào `HomePage.jsx`.
+
+---
+
+## 2026-11-09 (Dương): Tra cứu điểm (API + web) và hàm `getPassedCourseIds`
+
+### Thêm
+- API: bảng `grades` (một dòng điểm cho một lần đăng ký lớp: điểm quá trình, điểm thi).
+  - File mới: `models/grade/grade.model.ts`, `seeds/grade.seed.ts`, `services/grade.service.ts`, `controllers/grade.controller.ts`, `routes/grade.route.ts`.
+  - **`GradeService.getPassedCourseIds(studentId)`** (cho Đăng ký học của Phi): nhận `students.id`, trả mảng `courses.id` sinh viên đã qua (điểm tổng hệ 10 từ 4,0 trở lên, chỉ tính đăng ký `registered`).
+  - `GET /api/v1/grades/my`: bảng điểm của sinh viên đang đăng nhập. Gồm thông tin sinh viên, tổng kết toàn khoá và các học kỳ (mới nhất trước), mỗi học kỳ có danh sách học phần và tổng kết học kỳ.
+  - `POST /api/v1/grades/seed` (admin, chỉ development): 4 điểm của `24100001` ở 2526-HK2, PHY1001 bị F.
+- Web: `apis/gradeApi.js`, `pages/GradePage/GradePage.jsx`, `GradeDialog.jsx` (cửa sổ chi tiết điểm), `formatScore.js`, trang `/study-corner/grade`.
+
+### Sửa
+- `models/index.ts` (thêm `GradeModel.belongsTo(EnrollmentModel)`, `EnrollmentModel.hasOne(GradeModel, as "grade")`), `routes/index.ts`, `routes/index.jsx`: chỉ thêm dòng.
+
+### Ý tưởng / quyết định
+- Nội dung theo ảnh trang thật Dương gửi (bảng theo học kỳ, lần học, hệ 10, hệ 4, điểm chữ, đánh giá, chi tiết, tổng kết học kỳ, tổng điểm toàn khoá). Giao diện theo kiểu dự án. Bỏ các tab (học phần nợ, quyết định...) và khung thông tin cá nhân bên trái; thông tin sinh viên đưa lên dòng mô tả, tổng kết toàn khoá đưa lên trên để bảng đủ rộng.
+- Chỉ lưu điểm quá trình và điểm thi. Điểm tổng = 30% quá trình + 70% thi (làm tròn 1 chữ số), điểm chữ và hệ 4 tính trong service theo bảng `SCALE`. Đổi cách tính chỉ sửa 1 chỗ.
+- Qua môn: điểm tổng từ 4,0 (điểm D).
+- Điểm TB học kỳ tính trên các môn có điểm (kể cả trượt). Điểm TB tích luỹ và tín chỉ tích luỹ chỉ tính môn đã qua, cộng dồn đến hết học kỳ đó.
+- Học kỳ đang học vẫn hiện, các môn ghi "Chưa có điểm".
+- Không thêm dữ liệu vào `enrollments` của Phi, nên điểm mẫu chỉ có một học kỳ, "lần học" đều là 1.
+- **Ảnh hưởng tới Phi:** khi Phi gọi `getPassedCourseIds`, PHY1001 của `24100001` sẽ là "chưa qua". Kịch bản điểm mẫu (PHANCHIA Bước 0) cần Phi xác nhận.
+
+### Đã kiểm tra
+- `tsc` không lỗi. `oxlint` sạch, `vite build` thành công.
+- API thật: seed thêm 4, lần 2 không thêm gì. Điểm tổng 7,7 / 6,3 / 8,7 / 3,3 khớp tính tay. Học kỳ 2526-HK2: TB hệ 10 = 6,50, hệ 4 = 2,25, tích luỹ 9 tín chỉ, TB tích luỹ 7,57 / 3,00. Admin 404, chưa đăng nhập 401, sinh viên gọi seed 403.
+- `getPassedCourseIds` chạy thật bằng `tsx` (file thử để ngoài dự án): `24100001` trả 3 học phần ENG1002, INT1002, MAT1003; `24100002` trả 0.
+- Trình duyệt 1280x800: đủ 10 cột, 2 học kỳ. Bấm "Chi tiết" PHY1001 ra cửa sổ điểm quá trình 5,0, thi 2,5, tổng 3,3, F, Học lại. Esc đóng được.
+- Chưa thử: điện thoại, sinh viên không có học phần nào.
+
+### Việc tiếp theo
+- Báo Phi hàm `getPassedCourseIds` đã có, để dùng trong Đăng ký học.
+- Chương trình học: thêm trạng thái "Đã qua" bằng hàm này.
+- Khối "Kết quả học tập" cho Trang chủ.
+
+---
+
+## 2026-11-09 (Dương): Chương trình học (API + web)
+
+### Thêm
+- API: bảng `programs` (chương trình đào tạo: mã, tên, ngành, khoá) và `program_courses` (học phần trong chương trình: khối kiến thức, học kỳ dự kiến, bắt buộc hay tự chọn).
+  - File mới: `models/program/program.model.ts`, `models/program/programCourse.model.ts`, `seeds/program.seed.ts`, `services/program.service.ts`, `controllers/program.controller.ts`, `routes/program.route.ts`.
+  - `GET /api/v1/programs/my`: chương trình của sinh viên đang đăng nhập, tìm theo `majorName` + `cohort` trong `students`. Trả thông tin chương trình, tổng tín chỉ, danh sách khối kiến thức (số học phần, số tín chỉ) và các học phần kèm học phần tiên quyết, học kỳ thực tế.
+  - `POST /api/v1/programs/seed` (admin, chỉ development): chương trình `CNTT-K18` gồm 15 học phần của `core.seed.ts`.
+- Web: `apis/programApi.js`, `pages/ProgramPage/ProgramPage.jsx` ở `/study-corner/program`. Ô tìm theo mã hoặc tên (lọc ngay trên trình duyệt), bảng 8 cột. Hàng thẻ "Khối kiến thức" phía trên bảng, bấm vào một khối mở cửa sổ (`BlockDialog.jsx`, thẻ `<dialog>`) liệt kê học phần của khối đó: STT, mã, tên, số tín chỉ, học kỳ dự kiến, bắt buộc / tự chọn, nút "Quay lại".
+
+### Sửa
+- `models/index.ts`, `routes/index.ts` (API) và `routes/index.jsx` (web): chỉ thêm dòng của Chương trình học.
+
+### Ý tưởng / quyết định
+- Nội dung theo ảnh trang thật Dương gửi (STT, mã, tên, khối, tín chỉ, điều kiện, học kỳ dự kiến, học kỳ thực tế, các khối kiến thức). Giao diện theo kiểu dự án. Bỏ LT/TH, tín chỉ học phí, nút chi tiết, nhóm khối lựa chọn.
+- Không có validation vì đường dẫn không nhận tham số.
+- Tiên quyết đọc từ `course_prerequisites` của Phi qua quan hệ `prerequisites` có sẵn (chỉ đọc).
+- "Học kỳ thực tế" lấy từ `enrollments` đã đăng ký (bỏ lớp huỷ). Khi có bảng điểm sẽ phân biệt "đã qua" bằng `getPassedCourseIds`.
+- Không có ô chọn chương trình vì mỗi sinh viên chỉ có một chương trình.
+
+### Đã kiểm tra
+- `tsc` không lỗi. `oxlint` sạch, `vite build` thành công.
+- API thật: seed thêm 15, lần 2 không thêm gì. `24100001` ra 15 học phần, 44 tín chỉ, 3 khối (đại cương 7/20, cơ sở ngành 5/15, chuyên ngành 3/9). Tiên quyết đúng (INT2001 cần INT1002...). Học kỳ 1–2 có học kỳ thực tế, học kỳ 3 chưa học. Admin 404, chưa đăng nhập 401, sinh viên gọi seed 403.
+- Trình duyệt 1440x900 và 1280x800: bảng hiện đủ 8 cột, không cuộn ngang. Gõ "tiếng anh" còn 2 học phần.
+- Bấm khối "Chuyên ngành" ra 3 học phần, "Giáo dục đại cương" ra 7. Đóng được bằng Esc, nút "Quay lại", nút X và bấm ra vùng tối.
+- Sửa sau khi Dương thử: bản đầu đặt khung khối ở cột bên phải, trên màn hình hẹp bảng bị mất cột "Điều kiện" trở đi. Đã chuyển khối lên trên bảng.
+- Chưa thử: điện thoại, tìm không ra kết quả.
+
+### Việc tiếp theo
+- Thêm cột hoặc trạng thái "Đã qua" khi làm Tra cứu điểm.
+
+---
+
+## 2026-11-09 (Dương): Lịch thi (API + web)
+
+### Thêm
+- API: bảng `exams` (lịch thi của một lớp học phần: ngày, giờ bắt đầu, số phút, hình thức) và bảng `exam_rooms` (sinh viên nào thi phòng nào, số báo danh mấy).
+  - File mới: `models/exam/exam.model.ts`, `models/exam/examRoom.model.ts`, `seeds/exam.seed.ts`, `validations/exam.validation.ts`, `services/exam.service.ts`, `controllers/exam.controller.ts`, `routes/exam.route.ts`.
+  - `GET /api/v1/exams?semesterCode=2627-HK1`: lịch thi của sinh viên đang đăng nhập, chỉ các lớp đã đăng ký (`registered`) và lớp chưa huỷ. Không gửi `semesterCode` thì lấy học kỳ hiện tại. Sắp xếp theo ngày rồi giờ.
+  - `POST /api/v1/exams/seed` (admin, chỉ development): 9 lịch thi mẫu cho `24100001` ở 2526-HK2 và 2627-HK1. Môn POL1001 cố ý chưa xếp phòng.
+- Web: `apis/examApi.js`, `pages/ExamSchedulePage/ExamSchedulePage.jsx` ở `/schedule/exam`. Ô chọn học kỳ và bảng 7 cột: Ngày thi, Giờ, Học phần, Hình thức, Phòng, Số báo danh, Trạng thái (Đã xếp phòng / Chờ xếp phòng / Đã thi).
+
+### Sửa
+- `models/index.ts`, `routes/index.ts` (API) và `routes/index.jsx` (web): chỉ thêm dòng của Lịch thi, không đổi phần của Phi.
+
+### Ý tưởng / quyết định
+- Làm đơn giản, chỉ cho máy tính, giống Văn bản. Chưa làm các tab Sắp thi / Đã thi / Thi lại, nút In và Xuất lịch như mockup `test/mockups/lich-thi.html`.
+- Một lớp học phần có một lịch thi (`class_section_id` không trùng). Thi lại để sau.
+- Danh sách học kỳ dùng `scheduleApi.getSemesters()` của Phi (chỉ đọc), lấy lớp đã đăng ký qua `enrollments` giống Lịch học của Phi.
+
+### Đã kiểm tra
+- `npm run build` (API) không lỗi. `oxlint` sạch, `vite build` thành công.
+- API thật: seed thêm 9, gọi lần 2 không thêm gì. 2627-HK1 ra 5 môn đúng thứ tự ngày, POL1001 không có phòng. 2526-HK2 ra 4 môn, 2627-HK2 ra 0. Sai mã học kỳ trả 404, chưa đăng nhập 401, sinh viên gọi seed 403.
+- Trình duyệt (1440px, tài khoản `24100001`): 3 học kỳ hiện đúng 3 trạng thái (Đã xếp phòng / Chờ xếp phòng, Đã thi, Chưa có lịch thi). Thứ trong tuần đúng (04/01/2027 là Thứ 2).
+- Chưa thử: điện thoại, tài khoản admin vào trang.
+
+### Việc tiếp theo
+- Dữ liệu cũ: chạy `POST /api/v1/exams/seed` bằng tài khoản admin sau khi đã seed học vụ.
+- Sau này: tab thi lại, khối "Lịch thi sắp tới" cho Trang chủ.
+
+---
+
+## 2026-11-09 (Dương): Văn bản (API + web)
+
+### Thêm
+- API: bảng `documents` và `document_files`; `GET /api/v1/documents` (lọc theo từ khoá, loại, đơn vị, có chia trang), `POST /api/v1/documents/seed` (admin, 8 văn bản mẫu, cần seed tin tức trước để có đơn vị).
+- Web: `apis/documentApi.js`, `pages/DocumentPage/DocumentPage.jsx` ở `/document`: ô tìm, ô chọn loại, ô chọn đơn vị, bảng 6 cột có link tải tệp.
+
+### Sửa
+- `routes/index.ts`: đường dẫn API sửa từ `/document` thành `/documents` cho khớp `documentApi.js` (trước đó web báo 404).
+
+### Ý tưởng / quyết định
+- Bản đơn giản, chỉ cho máy tính. Web lấy tối đa 100 văn bản, chưa chia trang. Chưa tách `SearchInput`, `Select`.
+- Đơn vị ban hành đọc qua `newsApi.getDepartments()` của Phi. Tệp văn bản để bảng riêng, không dùng chung `attachments` của tin tức.
+
+### Đã kiểm tra
+- Seed thêm 8 văn bản, danh sách trả đủ 8, mới nhất đứng đầu. Dương mở trang trên trình duyệt thấy đúng.
+
+---
+
 ## 2026-11-03 (Phi): Lịch học gọn phần đầu trang
 
 ### Sửa
