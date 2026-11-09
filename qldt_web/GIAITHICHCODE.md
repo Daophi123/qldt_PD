@@ -791,6 +791,13 @@ const passedCourseIds = await GradeService.getPassedCourseIds(student.id); // st
 
 ---
 
+### 10.6 Bố cục hai cột (Phi sửa, Dương đồng ý, 2026-11-09)
+
+- Lưới `grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]`: cột trái là "Tổng kết toàn khoá" (`lg:sticky lg:top-4`), cột phải là danh sách học kỳ.
+- `grid-cols-1` quan trọng ở màn điện thoại: lưới không khai báo cột thì cột tự rộng theo nội dung, bảng điểm `minWidth` lớn sẽ kéo cả trang tràn ngang. `grid-cols-1` là `minmax(0,1fr)` nên cột không vượt quá màn hình, bảng tự cuộn trong khung.
+- Bảng điểm `minWidth={760}` để vừa cột phải ở màn 1440px.
+- Khung tổng kết là danh sách `dl` dạng dòng: mỗi `div` là `flex justify-between` (tên `dt` bên trái, số `dd` bên phải), các dòng ngăn bằng `divide-y divide-line`.
+
 ## Phần 11: Khối trang chủ và component bộ lọc (Dương)
 
 ### 11.1 Khối trang chủ (`pages/HomePage/widgets/`)
@@ -831,3 +838,74 @@ import { GradeSummaryWidget } from './widgets/GradeSummaryWidget'
 
 ### 11.3 Kiểm tra (2026-11-09)
 - Xem mục CHANGELOG cùng ngày. Hai khối được thử bằng cách gắn tạm vào trang Lịch thi, chưa thử trên `HomePage.jsx` thật.
+
+## Phần 12: Đăng ký học và Tra cứu kết quả đăng ký (Phi)
+
+Claude viết thẳng theo yêu cầu của Phi, code không có chú thích.
+
+### 12.1 API
+
+| API | Làm gì |
+|---|---|
+| `GET /api/v1/registrations?semesterCode=` | `{ semester, rules, registeredCredits, registered, courses }`. `semester.status` là `open`, `upcoming` hoặc `closed` |
+| `POST /api/v1/registrations` | Body `{ classSectionId }`. Trả về lớp vừa đăng ký và tổng tín chỉ mới. Bị chặn thì trả 409 kèm lý do |
+| `DELETE /api/v1/registrations/:enrollmentId` | Huỷ lớp. Chỉ huỷ được lượt của chính mình, khi cổng đang mở |
+| `GET /api/v1/registrations/history?semesterCode=` | `{ semester, totalCredits, items }`, mỗi dòng có `status`, `registeredAt`, `cancelledAt` |
+
+Mỗi học phần trong `courses` có `isPassed`, `isRetake`, `prerequisites` (mỗi môn có `status`: `passed`, `studying`, `missing`), `registeredClassSectionCode` và `classSections`. Mỗi lớp có `registeredCount`, `capacity`, `isRegistered`, `enrollmentId`, `isFull`, `conflictWith`, `blockReason`, `sessions`.
+
+### 12.2 `services/registration.service.ts`
+
+- **Chọn học kỳ đăng ký** (`pickRegistrationSemester`): đợt đang mở, nếu không có thì đợt sắp mở gần nhất, sau cùng là đợt vừa kết thúc. Trạng thái đợt tính từ `registrationStart`, `registrationEnd` (chuỗi `DD/MM/YYYY` đổi sang `YYYY-MM-DD` để so sánh).
+- **Lịch sử học** (`getStudyHistory`):
+  - `passedIds`: lấy từ `GradeService.getPassedCourseIds` của Dương. Đây là chỗ duy nhất Đăng ký học dùng tới điểm.
+  - Các lớp đã đăng ký ở học kỳ khác: học kỳ đã kết thúc mà chưa qua thì là **học lại** (`retakeIds`), học kỳ chưa kết thúc thì là **đang học** (`studyingIds`).
+- **`getBlockReason(section, context, registeredCount)`** trả về lý do không đăng ký được, hoặc `null`. Kiểm tra theo thứ tự: thời gian đăng ký, trạng thái lớp, đã đăng ký lớp này, đã có lớp khác cùng học phần, thiếu tiên quyết, vượt `maxCredits`, trùng lịch, hết chỗ. Hàm này dùng cho cả danh sách (`getOverview`) lẫn lúc đăng ký (`register`), nên nút trên web và kết quả API luôn khớp nhau.
+- **Trùng lịch** (`isOverlap`): cùng thứ và hai khoảng tiết giao nhau (`a.start <= b.end && b.start <= a.end`).
+- **`register`** chạy trong `sequelize.transaction`: đọc lại các lớp đã đăng ký, đếm sĩ số, kiểm tra, rồi tạo bản ghi. Nếu sinh viên từng huỷ đúng lớp này thì cập nhật bản ghi cũ về `registered` (bảng `enrollments` có khoá duy nhất sinh viên + lớp, không tạo được dòng thứ hai).
+- **`cancel`** đổi `status` sang `cancelled`, không xoá, để trang Tra cứu kết quả đăng ký còn hiện lớp đã huỷ. Thời điểm huỷ lấy từ `updatedAt`.
+- **Học cải thiện**: học phần đã qua (`isPassed`) không bị chặn, sinh viên đăng ký lại để học cải thiện điểm. Web gắn nhãn "Học cải thiện". Mỗi lần học là một dòng `enrollments` riêng, điểm do phần của Dương tính.
+- **Quy định** nằm ở `REGISTRATION_RULES = { minCredits: 14, maxCredits: 24 }`. Tối đa thì chặn, tối thiểu chỉ nhắc trên giao diện.
+
+### 12.3 Phía web
+
+| File | Làm gì |
+|---|---|
+| `apis/registrationApi.js` | 4 hàm gọi API ở 12.1 |
+| `CourseRegistrationPage.jsx` | Gọi API, giữ ô tìm, bộ lọc, lớp đang xử lý (`pendingId`), thông báo, lớp đang chờ xác nhận huỷ |
+| `CourseOfferingCard.jsx` | Một học phần: tiêu đề, nhãn trạng thái, bảng lớp (`DataTable`) |
+| `RegisteredPanel.jsx` | Khung bên phải: tổng tín chỉ, thanh tiến độ, danh sách lớp đã đăng ký |
+| `EligibleFilterBox.jsx` | Ô tick "Chỉ hiện học phần đủ điều kiện" dưới khung lớp đã đăng ký (truyền vào `RegisteredPanel` qua `children`) |
+| `registrationText.js` | Hàm thuần: rút gọn mã lớp (`2627-HK2-INT2004-01` thành `INT2004-01`), chữ thứ / tiết, bỏ dấu để tìm kiếm, lý do bị chặn ở cấp học phần |
+| `RegistrationResultPage.jsx` | Trang Tra cứu kết quả đăng ký |
+| `components/ui/ConfirmDialog.jsx` | Hộp thoại xác nhận dùng chung |
+
+- **Nút trên mỗi lớp**: đã đăng ký thì "Huỷ" (viền đỏ). Chưa đăng ký mà `blockReason` có giá trị thì nút mờ, chữ là "Hết chỗ", "Trùng lịch" hoặc "Đăng ký". Lý do ghi bằng chữ đỏ dưới lịch học và nối với nút bằng `aria-describedby`. Lý do chung của cả học phần (thiếu tiên quyết) ghi một lần ở tiêu đề học phần, không lặp lại ở từng lớp.
+- **Sau khi đăng ký / huỷ** gọi `overview.reload()`. `useAsync` giữ dữ liệu cũ trong lúc tải lại, các nút bị khoá (`busy`) để không bấm hai lần.
+- **Lọc học phần đủ điều kiện**: tick ô thì chỉ giữ học phần có `getCourseBlock(course) === null` (đủ học phần tiên quyết; học phần đã qua vẫn tính là đủ vì được học cải thiện). Điều kiện này cộng với ô tìm kiếm và bộ lọc thả xuống, cả ba cùng phải thoả. Số "x/y học phần đủ điều kiện" tính trên toàn bộ học phần, không phụ thuộc ô tìm.
+- **Tìm kiếm không dấu**: `normalizeText` dùng `normalize('NFD')` rồi bỏ dấu, đổi `đ` thành `d`, nên gõ "cong nghe" vẫn ra "Công nghệ phần mềm".
+- **`ConfirmDialog`** dùng thẻ `<dialog>` và `showModal()`: trình duyệt tự giữ focus trong hộp thoại, Esc để đóng, focus về lại nút đã mở. Không gọi `dialog.close()` trong cleanup của `useEffect`, vì ở StrictMode effect chạy hai lần, lần đóng đó bắn sự kiện `close` làm hộp thoại tắt ngay khi vừa mở.
+- **Điện thoại**: khung lớp đã đăng ký lên trên (`order-first`), bảng lớp cuộn ngang trong khung, nút X cao 44px.
+
+### 12.4 Kiểm tra
+
+Xem mục CHANGELOG ngày 2026-11-09 (Phi). Đã chạy trên bản sao database, gồm đủ các trường hợp bị chặn, huỷ rồi đăng ký lại, và quyền của sinh viên khác / admin.
+
+## Phần 13: Đổi mật khẩu (Phi)
+
+- API đã có từ trước: `PUT /api/v1/auth/password` (`oldPassword`, `newPassword`). API xoá mọi refresh token của tài khoản, nên sau khi đổi, mọi thiết bị (kể cả máy đang dùng) phải đăng nhập lại.
+- `ChangePasswordPage.jsx`:
+  - Ba ô `PasswordField`. Kiểm tra trên trình duyệt giống API: không trống, ít nhất 8 ký tự, khác mật khẩu cũ, nhập lại phải khớp. Lỗi hiện dưới ô, focus vào ô lỗi đầu tiên.
+  - API báo "Mật khẩu cũ không đúng" thì xoá ô mật khẩu hiện tại và báo ngay dưới ô đó. Lỗi khác hiện ở khung đỏ trên form.
+  - Thành công: `setLoginNotice(...)` rồi `logout()`. `ProtectedRoute` chuyển về `/login`.
+- `utils/loginNotice.js`: biến trong module giữ một câu thông báo cho trang đăng nhập. Không dùng `state` của `navigate` vì `ProtectedRoute` tự chuyển trang và ghi đè `state`. `LoginPage` đọc bằng `useState(() => peekLoginNotice())` rồi xoá trong `useEffect`. Không đọc-và-xoá trong `useState` vì StrictMode gọi hàm khởi tạo hai lần, lần thứ hai sẽ mất thông báo.
+- `ProtectedRoute.jsx`: `NO_RETURN_PATHS = ['/change-password']`. Trang này không được lưu vào `from`, nên đăng nhập lại xong về Trang chủ.
+
+## Phần 14: Ghép Trang chủ (Phi)
+
+- `HomePage.jsx`: tiêu đề "Xin chào, tên", dòng ngày hôm nay (`Intl.DateTimeFormat` tiếng Việt, viết hoa chữ đầu thứ). Máy tính màn rộng (`xl`) chia hai cột: trái là Lịch học hôm nay và Tin tức mới, phải là Việc cần làm, Lịch thi sắp tới, Kết quả học tập. Màn hẹp xếp một cột. Tài khoản không phải sinh viên chỉ có Tin tức mới (các khối kia cần hồ sơ sinh viên).
+- `widgets/WidgetFrame.jsx`: khung chung (tiêu đề, liên kết "Xem ..."), cùng kiểu với khối của Dương.
+- `TodayScheduleWidget`: dùng lại `GET /schedules/class` (học kỳ hiện tại). Đổi ngày hôm nay sang `dayOfWeek` (Chủ nhật là 8), chỉ lấy khi hôm nay nằm trong khoảng ngày học. Nhãn "Đã qua / Đang học / Sắp tới" so giờ hiện tại với `startTime`, `endTime`.
+- `LatestNewsWidget`: `GET /news?page=1&limit=5`, mỗi tin là một liên kết tới `/news/:id`, có biểu tượng ghim và chuyên mục.
+- `TodoWidget`: dùng `GET /registrations`. Đợt đăng ký đang mở thì nhắc hạn cuối, số ngày còn lại, số tín chỉ đã chọn và còn thiếu (chữ đỏ nếu chưa đủ 14). Đợt sắp mở thì nhắc ngày mở. Không có đợt nào thì hiện "Không có việc cần làm".
+- Kiểm tra: đăng nhập `24100001` thấy đủ 5 khối, `admin` chỉ thấy Tin tức mới. 390px không tràn ngang.

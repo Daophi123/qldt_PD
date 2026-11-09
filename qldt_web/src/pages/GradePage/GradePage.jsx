@@ -85,47 +85,51 @@ export function GradePage() {
         description={`${student.fullName}, mã số ${student.studentCode}, lớp ${student.className}, ngành ${student.majorName}`}
       />
 
-      <section className="mb-4 rounded-xl border border-line bg-panel">
-        <h2 className="border-b border-line px-4 py-3 text-sm font-semibold">Tổng kết toàn khoá</h2>
-        <dl className="grid grid-cols-4 gap-x-6 gap-y-3 px-4 py-3">
-          {facts.map(([label, value]) => (
-            <div key={label}>
-              <dt className="text-xs text-muted">{label}</dt>
-              <dd className="text-lg font-semibold">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {semesters.length === 0 && (
-        <EmptyState title="Chưa có học phần nào" description="Bạn chưa đăng ký học phần nào nên chưa có điểm." className="rounded-xl border border-line bg-panel" />
-      )}
-
-      {semesters.map(semester => (
-        <section key={semester.code} className="mb-4 rounded-xl border border-line bg-panel">
-          <h2 className="border-b border-line px-4 py-3 text-sm font-semibold">
-            {semester.name}, năm học {semester.academicYear}
-          </h2>
-
-          <DataTable columns={columns} rows={semester.items} caption={`Bảng điểm ${semester.name}, năm học ${semester.academicYear}`} minWidth={820} />
-
-          <div className="border-t border-line px-4 py-3 text-sm">
-            <p className="mb-2 font-semibold">Tổng kết học kỳ</p>
-            {semester.summary.credits === 0 ? (
-              <p className="text-muted">Học kỳ này chưa có điểm.</p>
-            ) : (
-              <dl className="grid grid-cols-2 gap-x-10 gap-y-1">
-                <div className="flex justify-between"><dt className="text-muted">Tổng tín chỉ có điểm</dt><dd>{semester.summary.credits}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Tín chỉ tích luỹ</dt><dd>{semester.summary.earnedCredits}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Điểm TB hệ 10</dt><dd>{formatScore(semester.summary.gpa10, 2)}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Điểm TB tích luỹ hệ 10</dt><dd>{formatScore(semester.summary.cumulativeGpa10, 2)}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Điểm TB hệ 4</dt><dd>{formatScore(semester.summary.gpa4, 2)}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Điểm TB tích luỹ hệ 4</dt><dd>{formatScore(semester.summary.cumulativeGpa4, 2)}</dd></div>
-              </dl>
-            )}
-          </div>
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <section className="rounded-xl border border-line bg-panel lg:sticky lg:top-4">
+          <h2 className="border-b border-line px-4 py-3 text-sm font-semibold">Tổng kết toàn khoá</h2>
+          <dl className="divide-y divide-line px-4">
+            {facts.map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-3 py-2.5">
+                <dt className="text-sm text-muted">{label}</dt>
+                <dd className="font-semibold tabular-nums">{value}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
-      ))}
+
+        <div className="grid min-w-0 grid-cols-1 gap-4">
+          {semesters.length === 0 && (
+            <EmptyState title="Chưa có học phần nào" description="Bạn chưa đăng ký học phần nào nên chưa có điểm." className="rounded-xl border border-line bg-panel" />
+          )}
+
+          {semesters.map(semester => (
+            <section key={semester.code} className="rounded-xl border border-line bg-panel">
+              <h2 className="border-b border-line px-4 py-3 text-sm font-semibold">
+                {semester.name}, năm học {semester.academicYear}
+              </h2>
+
+              <DataTable columns={columns} rows={semester.items} caption={`Bảng điểm ${semester.name}, năm học ${semester.academicYear}`} minWidth={760} />
+
+              <div className="border-t border-line px-4 py-3 text-sm">
+                <p className="mb-2 font-semibold">Tổng kết học kỳ</p>
+                {semester.summary.credits === 0 ? (
+                  <p className="text-muted">Học kỳ này chưa có điểm.</p>
+                ) : (
+                  <dl className="grid grid-cols-2 gap-x-10 gap-y-1">
+                    <div className="flex justify-between"><dt className="text-muted">Tổng tín chỉ có điểm</dt><dd>{semester.summary.credits}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted">Tín chỉ tích luỹ</dt><dd>{semester.summary.earnedCredits}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted">Điểm TB hệ 10</dt><dd>{formatScore(semester.summary.gpa10, 2)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted">Điểm TB tích luỹ hệ 10</dt><dd>{formatScore(semester.summary.cumulativeGpa10, 2)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted">Điểm TB hệ 4</dt><dd>{formatScore(semester.summary.gpa4, 2)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-muted">Điểm TB tích luỹ hệ 4</dt><dd>{formatScore(semester.summary.cumulativeGpa4, 2)}</dd></div>
+                  </dl>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
 
       {openGrade && <GradeDialog grade={openGrade} onClose={() => setOpenGrade(null)} />}
     </div>

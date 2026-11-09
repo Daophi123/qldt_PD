@@ -5,7 +5,9 @@ const base = 'inline-flex h-[42px] items-center justify-center gap-2 whitespace-
 
 const variants = {
   primary: 'bg-accent text-white hover:bg-accent-hover',
-  default: 'border border-line bg-panel text-ink hover:bg-canvas'
+  default: 'border border-line bg-panel text-ink hover:bg-canvas',
+  danger: 'bg-danger text-white hover:bg-danger/90',
+  dangerOutline: 'border border-danger/30 bg-panel text-danger hover:bg-danger-soft'
 };
 
 export function Button({ variant = 'default', type = 'button', loading = false, disabled, className, children, ...props }) {

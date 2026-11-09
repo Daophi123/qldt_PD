@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
-import { StudentIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { useEffect, useRef, useState } from 'react';
+import { CheckCircleIcon, StudentIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { useAuth } from '../../hooks/useAuth';
 import { getErrorMessage } from '../../utils/getErrorMessage';
+import { clearLoginNotice, peekLoginNotice } from '../../utils/loginNotice';
 import { TextField } from '../../components/form/TextField';
 import { PasswordField } from '../../components/form/PasswordField';
 import { Button } from '../../components/ui/Button';
@@ -23,6 +24,11 @@ export function LoginPage() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [notice] = useState(() => peekLoginNotice());
+
+  useEffect(() => {
+    clearLoginNotice();
+  }, []);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -74,6 +80,10 @@ export function LoginPage() {
           <p className="mt-1.5 mb-8 text-muted">
             Sinh viên dùng mã số sinh viên. Cán bộ dùng email công vụ.
           </p>
+          {notice && !formError && ( <div role="status" className="mb-5 flex items-start gap-2.5 rounded-lg border border-accent/20 bg-accent-soft px-3.5 py-3 text-accent-hover">
+            <CheckCircleIcon size={18} weight="fill" className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p>{notice}</p>
+          </div> )}
           {formError && ( <div role="alert" className="mb-5 flex items-start gap-2.5 rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-danger">
             <WarningCircleIcon size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
             <p>{formError}</p>
