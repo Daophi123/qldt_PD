@@ -58,6 +58,7 @@ export const SEED_CLASS_SECTIONS = [
   { code: "2627-HK2-ENG1003-01", courseCode: "ENG1003", semesterCode: "2627-HK2", lecturerName: "ThS. Hoàng Minh Châu", capacity: 40, status: "open", sessions: [{ dayOfWeek: 6, startPeriod: 1, endPeriod: 3, room: "C1-102" }] },
   { code: "2627-HK2-ENG1002-01", courseCode: "ENG1002", semesterCode: "2627-HK2", lecturerName: "ThS. Hoàng Minh Châu", capacity: 40, status: "open", sessions: [{ dayOfWeek: 6, startPeriod: 4, endPeriod: 6, room: "C1-104" }] },
   { code: "2627-HK2-MAT2002-01", courseCode: "MAT2002", semesterCode: "2627-HK2", lecturerName: "TS. Đinh Công Minh", capacity: 70, status: "open", sessions: [{ dayOfWeek: 3, startPeriod: 2, endPeriod: 4, room: "A1-205" }] },
+  { code: "2627-HK2-PHY1001-01", courseCode: "PHY1001", semesterCode: "2627-HK2", lecturerName: "TS. Đỗ Quang Huy", capacity: 80, status: "open", sessions: [{ dayOfWeek: 4, startPeriod: 2, endPeriod: 4, room: "A3-110" }] },
   { code: "2627-HK2-POL1002-01", courseCode: "POL1002", semesterCode: "2627-HK2", lecturerName: "TS. Ngô Thanh Tùng", capacity: 2, status: "open", sessions: [{ dayOfWeek: 7, startPeriod: 1, endPeriod: 3, room: "Hội trường B1" }] },
 ];
 

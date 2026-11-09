@@ -13,6 +13,123 @@ Quy ước mỗi mục:
 
 ---
 
+## 2026-11-09 (Phi, trang của Dương): Tra cứu điểm chia hai cột
+
+Phi yêu cầu, Dương đã đồng ý. Claude sửa `GradePage.jsx`, chỉ đổi bố cục, không đổi dữ liệu hay cách tính điểm.
+
+### Sửa
+- `pages/GradePage/GradePage.jsx`:
+  - Từ màn `lg` (1024px) trở lên chia hai cột: bên trái là khung "Tổng kết toàn khoá" (rộng 280px, đứng yên khi cuộn nhờ `lg:sticky lg:top-4`), bên phải là bảng điểm từng học kỳ.
+  - Khung tổng kết: mỗi chỉ số một dòng ngang, tên bên trái, số bên phải (ví dụ "Tín chỉ chương trình ... 44"), các dòng ngăn bằng vạch kẻ mảnh (`divide-y`). Số dùng `tabular-nums` để các chữ số thẳng cột.
+  - Màn hẹp hơn vẫn một cột như cũ, tổng kết nằm trên.
+  - Lưới thêm `grid-cols-1` (tức `minmax(0,1fr)`). Không có lớp này thì ở màn điện thoại cột duy nhất bị bảng điểm kéo rộng ra 820px, cả trang tràn ngang.
+  - Bảng điểm `minWidth` từ 820 xuống 760 để vừa cột phải ở màn 1440px, không hiện thanh cuộn ngang.
+
+### Đã kiểm tra
+- Web chạy với API trên bản sao database, đăng nhập `24100001`:
+  - 1440x900: tổng kết bên trái, ba học kỳ bên phải, không bảng nào cuộn ngang. Cuộn trang thì khung tổng kết đứng yên ở trên.
+  - Khung tổng kết: cả 7 dòng có tên và số nằm cùng một hàng, số canh thẳng mép phải.
+  - 1280x800: trang không tràn, bảng điểm cuộn ngang 105px trong khung của nó.
+  - 390px: một cột, trang không tràn ngang.
+- `oxlint` sạch, `vite build` thành công.
+- Ảnh: `test/tra-cuu-diem-1-hai-cot.png`, `test/tra-cuu-diem-2-mobile.png`.
+
+---
+
+## 2026-11-09 (Phi): Đăng ký học, cho đăng ký học cải thiện học phần đã qua
+
+### Sửa
+- API `registration.service.ts`: bỏ điều kiện chặn "Bạn đã qua học phần này" trong `getBlockReason`. Học phần đã qua giờ đăng ký được để học cải thiện điểm, vẫn phải qua các kiểm tra còn lại (thời gian, tín chỉ tối đa, trùng lịch, hết chỗ...).
+- Web:
+  - `registrationText.js`: `getCourseBlock` không còn coi học phần đã qua là bị chặn.
+  - `CourseOfferingCard.jsx`: học phần đã qua có nhãn "Học cải thiện" và dòng "Bạn đã qua học phần này. Đăng ký lại để học cải thiện điểm." (chữ xám, không phải chữ đỏ báo lỗi). Bỏ nhãn "Đã qua".
+  - `EligibleFilterBox.jsx`: dòng giải thích đổi thành "Ẩn học phần chưa đạt học phần tiên quyết", vì học phần đã qua giờ cũng tính là đủ điều kiện.
+  - `registrationText.js`: khoảng ký tự dấu trong `normalizeText` viết lại bằng mã `\u0300-\u036f` thay cho ký tự dấu thật (chạy như nhau, nhưng ký tự dấu thật không nhìn thấy trong trình soạn thảo).
+
+### Ý tưởng / quyết định
+- Phi chốt: học phần đã qua vẫn được học cải thiện để lên điểm.
+- Lần học cải thiện là một lượt đăng ký mới (một dòng `enrollments` mới, lớp khác của học kỳ khác). Điểm của lần học này do phần Tra cứu điểm của Dương tính (bảng điểm của Dương đã có cột lần học `attempt`). Cách lấy điểm nào khi học cải thiện (điểm cao nhất hay điểm lần sau) cần thống nhất với Dương.
+
+### Đã kiểm tra
+- `tsc` của API không lỗi, `oxlint` sạch, `vite build` thành công.
+- Web chạy với API trên bản sao database, đăng nhập `24100001`, 2627-HK2: ENG1002 (đã qua) hiện nhãn "Học cải thiện", nút Đăng ký bấm được, đăng ký thành công "Đã đăng ký lớp ENG1002-01, Tiếng Anh 2.". Ô lọc báo 5/7 học phần đủ điều kiện (bản sao này chưa có lớp PHY1001 học kỳ 2 vì database thật chưa chạy lại seed).
+- Ảnh: `test/dang-ky-hoc-5-cai-thien.png`.
+
+---
+
+## 2026-11-09 (Phi): Đăng ký học, ô lọc "Chỉ hiện học phần đủ điều kiện"
+
+### Thêm
+- `CourseRegistrationPage/EligibleFilterBox.jsx`: ô mới nằm ngay dưới khung "Học phần đã đăng ký", có ô tick "Chỉ hiện học phần đủ điều kiện" và dòng ghi số học phần đủ điều kiện (ví dụ 5/8).
+- Học phần **đủ điều kiện** là học phần chưa qua và đã đạt hết học phần tiên quyết (`getCourseBlock` trả về `null`). Lớp hết chỗ hay trùng lịch vẫn hiện, vì đó là chuyện của từng lớp, không phải của học phần.
+
+### Sửa
+- `RegisteredPanel.jsx`: nhận thêm `children` để đặt ô lọc giữa khung lớp đã đăng ký và nút "Xem trước thời khoá biểu".
+- `CourseRegistrationPage.jsx`: thêm `onlyEligible`, lọc cùng lúc với ô tìm kiếm và bộ lọc "Tất cả / Còn đăng ký được / Đã đăng ký".
+
+### Đã kiểm tra
+- Web chạy với API trên bản sao database, đăng nhập `24100001`, học kỳ 2627-HK2: 8 học phần, tick vào còn 5 (ẩn ENG1002 đã qua, INT2004 và INT2005 thiếu tiên quyết). Tick kèm bộ lọc "Đã đăng ký" còn 3. Bỏ tick hiện lại đủ 8.
+- 390px: ô tick nằm trên danh sách, vùng bấm cao 65px, không tràn ngang. `oxlint` sạch, `vite build` thành công.
+- Ảnh: `test/dang-ky-hoc-4-loc-du-dieu-kien.png`.
+
+---
+
+## 2026-11-09 (Phi): Đăng ký học, Tra cứu kết quả đăng ký, Đổi mật khẩu, ghép Trang chủ
+
+Phi nhờ Claude viết thẳng phần còn lại sau khi Dương xong phần của mình ("hãy code thực hiện nốt phần của tôi"). Code không có chú thích.
+
+### Thêm
+- **API Đăng ký học** (`/api/v1/registrations`, cần đăng nhập, chỉ sinh viên có hồ sơ):
+  - `GET /registrations?semesterCode=`: học phần và lớp mở trong kỳ, lớp đã đăng ký, tổng tín chỉ, quy định. Bỏ `semesterCode` thì lấy đợt đang mở (nếu không có thì đợt sắp mở gần nhất, sau cùng là đợt vừa kết thúc).
+  - `POST /registrations` (`{ classSectionId }`): đăng ký lớp.
+  - `DELETE /registrations/:enrollmentId`: huỷ lớp (chuyển trạng thái sang `cancelled`, không xoá dòng).
+  - `GET /registrations/history?semesterCode=`: kết quả đăng ký, gồm cả lớp đã huỷ.
+  - File: `services/registration.service.ts`, `controllers/registration.controller.ts`, `routes/registration.route.ts`, `validations/registration.validation.ts`, một dòng trong `routes/index.ts`.
+- **Trang Đăng ký học** (`/register-online/course-registration`): `CourseRegistrationPage.jsx`, `CourseOfferingCard.jsx`, `RegisteredPanel.jsx`, `registrationText.js`.
+  - Bên trái: học phần mở trong kỳ, mỗi học phần một bảng lớp (lịch, phòng, giảng viên, sĩ số, nút Đăng ký / Huỷ). Tìm theo mã hoặc tên (không dấu cũng được), lọc "Còn đăng ký được" / "Đã đăng ký".
+  - Bên phải: lớp đã đăng ký, thanh tín chỉ `x / 24`, nhắc còn thiếu bao nhiêu để đủ 14, nút "Xem trước thời khoá biểu" mở Lịch học của đúng học kỳ đó.
+  - Huỷ lớp phải xác nhận qua hộp thoại. Kết quả đăng ký / huỷ hiện ở dòng thông báo (`role="status"`).
+- **Trang Tra cứu kết quả đăng ký** (`/register-online/registration-of-course`): chọn học kỳ, bảng lớp đã đăng ký và đã huỷ, thời điểm đăng ký / huỷ, tổng tín chỉ.
+- **Trang Đổi mật khẩu** (`/change-password`): mật khẩu hiện tại, mật khẩu mới, nhập lại. Đổi xong thì đăng xuất, trang đăng nhập hiện "Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới." (`utils/loginNotice.js`).
+- **Trang chủ**: ghép 5 khối. Khối của Phi: `TodayScheduleWidget` (Lịch học hôm nay), `LatestNewsWidget` (Tin tức mới), `TodoWidget` (Việc cần làm: hạn đăng ký học, số tín chỉ còn thiếu), khung chung `WidgetFrame`. Khối của Dương giữ nguyên: `UpcomingExamsWidget`, `GradeSummaryWidget`. Tài khoản quản trị chỉ thấy Tin tức mới.
+- Component dùng chung `components/ui/ConfirmDialog.jsx` (hộp thoại xác nhận bằng thẻ `<dialog>`).
+
+### Sửa
+- `Button.jsx`: thêm kiểu `danger` (nền đỏ) và `dangerOutline` (viền đỏ). Kiểu cũ giữ nguyên.
+- `LoginPage.jsx`: hiện thông báo sau khi đổi mật khẩu.
+- `ProtectedRoute.jsx`: không nhớ trang `/change-password` để quay lại sau khi đăng nhập (nếu nhớ thì đăng nhập lại xong sẽ quay về trang Đổi mật khẩu).
+- `routes/index.jsx`: 3 trang thật thay `ComingSoonPage`.
+- `seeds/core.seed.ts`: thêm lớp `2627-HK2-PHY1001-01` (Thứ 4, tiết 2-4). Lý do: điểm mẫu của Dương cho ENG1002 qua và PHY1001 bị F, nên kịch bản "Học lại" phải dùng PHY1001. Lớp này trùng lịch với `INT2006-01`, để thử luôn trường hợp trùng lịch. Database cũ chỉ cần gọi lại `POST /api/v1/academic/seed` (thêm 1 bản ghi).
+
+### Ý tưởng / quyết định
+- **Quy tắc đăng ký** (chưa chốt khi họp, Claude đặt tạm, sửa ở `REGISTRATION_RULES`): tối đa 24 tín chỉ (chặn khi đăng ký), tối thiểu 14 (chỉ nhắc, không chặn vì sinh viên đăng ký từng lớp).
+- **Thứ tự kiểm tra khi đăng ký**: ngoài thời gian đăng ký, lớp huỷ / đóng, đã đăng ký lớp này, đã đăng ký lớp khác cùng học phần, đã qua học phần, thiếu tiên quyết, vượt 24 tín chỉ, trùng lịch, hết chỗ. Một hàm `getBlockReason` dùng cho cả hai chỗ: lúc trả danh sách (để web làm mờ nút và ghi lý do) và lúc đăng ký thật (để chặn ở API). Web và API không thể nói khác nhau.
+- **Tiên quyết = đã qua**, lấy qua `GradeService.getPassedCourseIds` của Dương, không đọc thẳng bảng điểm. Học phần tiên quyết đang học (chưa có điểm) vẫn bị chặn, web ghi rõ "đang học, chưa có điểm".
+- **Học lại**: đã học ở học kỳ đã kết thúc mà không có trong danh sách đã qua.
+- **Đăng ký chạy trong transaction**: đếm sĩ số và tạo bản ghi trong cùng một transaction để hai người bấm cùng lúc không vượt sĩ số.
+- **Huỷ là đổi trạng thái**, không xoá. Đăng ký lại đúng lớp đó thì bật lại bản ghi cũ (bảng có khoá duy nhất sinh viên + lớp).
+- Sau mỗi lần đăng ký / huỷ, trang tải lại toàn bộ danh sách để sĩ số, trùng lịch, tín chỉ luôn khớp với API.
+
+### Đã kiểm tra
+- `tsc` của API không lỗi. Web: `oxlint` sạch, `vite build` thành công.
+- API chạy trên **bản sao database** (cổng 4099), database thật không bị đổi:
+  - 24100001, 2627-HK2: đăng ký INT2006, MAT2002, ENG1003 thành công. PHY1001 bị chặn "Trùng lịch với lớp 2627-HK2-INT2006-01 (Thứ 4, tiết 1-3)". POL1002 "Lớp đã hết chỗ". INT2005 "Chưa đạt học phần tiên quyết INT2001". ENG1002 "Bạn đã qua học phần này". Đăng ký lại cùng lớp "Bạn đã đăng ký lớp này". Lớp học kỳ 1 "Đã hết thời gian đăng ký".
+  - Huỷ INT2006 rồi đăng ký PHY1001 được, sau đó INT2006 lại bị trùng lịch với PHY1001. Huỷ lần hai báo "đã được huỷ trước đó". Sinh viên khác huỷ lượt của 24100001 bị 404. Admin bị 404 "không có hồ sơ sinh viên". Thiếu `classSectionId` báo "Chưa chọn lớp học phần".
+- Web chạy với API bản sao, đăng nhập thật:
+  - Đăng ký học: hộp thoại huỷ mở, Esc đóng, nút "Giữ lại" được focus sẵn. Huỷ và đăng ký hiện đúng thông báo, thanh tín chỉ cập nhật. Tìm "cong nghe" ra INT2006. Ở 390px không tràn ngang, khung lớp đã đăng ký nằm trên.
+  - Tra cứu kết quả đăng ký: học kỳ 2 có 4 dòng (1 lớp đã huỷ), học kỳ 1 có 6 dòng, tổng 15 tín chỉ.
+  - Đổi mật khẩu: bỏ trống, nhập lại sai, sai mật khẩu hiện tại đều báo dưới đúng ô và focus vào ô lỗi. Đổi thành công thì về trang đăng nhập có thông báo, mật khẩu cũ bị từ chối, mật khẩu mới vào được và về Trang chủ.
+  - Trang chủ: sinh viên thấy đủ 5 khối, admin chỉ thấy Tin tức mới. 390px không tràn ngang.
+- Ảnh: `test/dang-ky-hoc-1.png`, `dang-ky-hoc-2-huy.png`, `dang-ky-hoc-3-mobile.png`, `ket-qua-dang-ky.png`, `doi-mat-khau-0.png`, `doi-mat-khau-1-loi.png`, `doi-mat-khau-2-dang-nhap-lai.png`, `trang-chu-1.png`, `trang-chu-2-mobile.png`.
+- Chưa thử: hai sinh viên cùng bấm vào chỗ cuối cùng của một lớp, chạm mức 24 tín chỉ (dữ liệu mẫu học kỳ 2 chỉ có tối đa 17 tín chỉ đăng ký được).
+
+### Việc tiếp theo
+- Chốt với Dương quy tắc tín chỉ tối thiểu / tối đa và việc có cho đăng ký khi học phần tiên quyết đang học hay không.
+- Báo Dương: thêm lớp PHY1001 học kỳ 2 vào `core.seed.ts`, cần gọi lại `POST /api/v1/academic/seed`.
+- Chạy `git rm --cached qldt_api/data/dbqldt.sqlite` (file vẫn đang được git theo dõi).
+
+---
+
 ## 2026-11-09 (Dương): Khối trang chủ "Lịch thi sắp tới", "Kết quả học tập" và component `SearchInput`, `Select`
 
 ### Thêm

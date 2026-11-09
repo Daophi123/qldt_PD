@@ -15,8 +15,11 @@ import { DocumentPage } from '../pages/DocumentPage/DocumentPage';
 import { ExamSchedulePage } from '../pages/ExamSchedulePage/ExamSchedulePage';
 import { ProgramPage } from '../pages/ProgramPage/ProgramPage';
 import { GradePage } from '../pages/GradePage/GradePage';
+import { CourseRegistrationPage } from '../pages/CourseRegistrationPage/CourseRegistrationPage';
+import { RegistrationResultPage } from '../pages/RegistrationResultPage/RegistrationResultPage';
+import { ChangePasswordPage } from '../pages/ChangePasswordPage/ChangePasswordPage';
 
-const BUILT_PATHS = ['/', '/news', '/schedule/class', '/document', '/schedule/exam', '/study-corner/program', '/study-corner/grade']
+const BUILT_PATHS = ['/', '/news', '/schedule/class', '/document', '/schedule/exam', '/study-corner/program', '/study-corner/grade', '/register-online/course-registration', '/register-online/registration-of-course', '/change-password']
 const comingSoonRoutes = NAV_LINKS.filter(link => !BUILT_PATHS.includes(link.to)).map(link => ({ path: link.to, element: <ComingSoonPage /> }))
 
 export const router = createBrowserRouter([
@@ -43,6 +46,9 @@ export const router = createBrowserRouter([
           { path: 'schedule/exam', element: <ExamSchedulePage /> },
           { path: 'study-corner/program', element: <ProgramPage /> },
           { path: 'study-corner/grade', element: <GradePage /> },
+          { path: 'register-online/course-registration', element: <CourseRegistrationPage /> },
+          { path: 'register-online/registration-of-course', element: <RegistrationResultPage /> },
+          { path: 'change-password', element: <ChangePasswordPage /> },
           ...comingSoonRoutes
         ],
       },

@@ -7,6 +7,7 @@ import documentRoutes from "./document.route";
 import examRoutes from "./exam.route";
 import programRoutes from "./program.route";
 import gradeRoutes from "./grade.route";
+import registrationRoutes from "./registration.route";
 
 const routes = Router();
 
@@ -18,5 +19,6 @@ routes.use("/documents", documentRoutes);
 routes.use("/exams", examRoutes);
 routes.use("/programs", programRoutes);
 routes.use("/grades", gradeRoutes);
+routes.use("/registrations", registrationRoutes);
 
 export default routes;
